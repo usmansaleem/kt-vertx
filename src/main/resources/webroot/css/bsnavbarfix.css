@@ -1,0 +1,17 @@
+/*
+Bootstrap navbar fix http://getbootstrap.com/components/#navbar-fixed-top
+*/
+/* fix fixed-bar */
+body { padding-top: 50px; }
+@media screen and (max-width: 768px) {
+  body { padding-top: 50px; }
+}
+
+/* fix fixed-bar jumping to in-page anchor issue */
+*[id]:before { 
+  display: block; 
+  content: " "; 
+  margin-top: -75px; 
+  height: 75px; 
+  visibility: hidden; 
+}

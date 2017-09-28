@@ -1,0 +1,71 @@
+/**
+Date CSS taken from http://www.wplover.com/1449/easier-date-display-technique-with-css-3/
+*/
+.date {
+  position: relative;
+  width: 70px;
+  font-family: Georgia, serif;
+  color: #999;
+  margin: 0 auto;
+ }
+
+.day, .month, .year {
+  position: absolute;
+  }
+
+.day {
+  font-size: 30px;
+  top: 15px;
+  }
+
+.month {
+  top: 0;
+  left: 0;
+  font-size: 18px;
+  }
+
+.year {
+  top: 19px;
+  right: 0;
+  font-size: 19px;
+  rotation: -90deg !important;
+  /* ** Hacks ** */
+  -webkit-transform: rotate(-90deg);
+  -moz-transform: rotate(-90deg);
+  }
+
+/* Animations */
+.page.ng-leave 	{ z-index:9999; }
+.page.ng-enter 	{ z-index:8888; }
+
+
+.page-home.ng-enter {  
+ -webkit-animation:scaleUp 0.5s both ease-in;
+ -moz-animation:scaleUp 0.5s both ease-in;
+ animation:scaleUp 0.5s both ease-in;    
+}
+.page-about.ng-enter 	{ 
+    -webkit-animation:slideInUp 0.5s both ease-in;
+    -moz-animation:slideInUp 0.5s both ease-in;
+    animation:slideInUp 0.5s both ease-in;  
+}
+.page-notes.ng-enter 	{ 
+    -webkit-animation:slideInUp 0.5s both ease-in;
+    -moz-animation:slideInUp 0.5s both ease-in;
+    animation:slideInUp 0.5s both ease-in;  
+}
+
+/* slide in from the bottom */
+@keyframes slideInUp {
+	from 	{ transform:translateY(100%); }
+	to	{ transform: translateY(0); }
+	}
+@-moz-keyframes slideInUp {
+	from 	{ -moz-transform:translateY(100%); }
+	to	{ -moz-transform: translateY(0); }
+}
+@-webkit-keyframes slideInUp {
+	from 	{ -webkit-transform:translateY(100%); }
+	to 	{ -webkit-transform: translateY(0); }
+}
+
