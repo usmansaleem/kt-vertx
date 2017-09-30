@@ -8,18 +8,18 @@ data class BlogItem(
         val title: String,
         val body: String? = "",
         val blogSection: String? = "Main",
-        val createdOn: String? = null,
-        val modifiedOn: String? = null,
-        val createDay: String? = null,
-        val createMonth: String? = null,
-        val createYear: String? = null,
-        val categories: List<Category>? = null
+        val createdOn: String? = "",
+        val modifiedOn: String? ="",
+        val createDay: String? = "",
+        val createMonth: String? = "",
+        val createYear: String? = "",
+        val categories: List<Category>? = emptyList()
 )
 
 /**
  * Represents a category*
  */
-data class Category(val id: Int, val name: String)
+data class Category(val id: Int = 0, val name: String = "")
 
 
 
