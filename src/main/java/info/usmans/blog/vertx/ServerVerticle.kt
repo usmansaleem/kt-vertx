@@ -6,10 +6,15 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import info.usmans.blog.model.BlogItem
 import info.usmans.blog.model.Category
 import io.vertx.core.AbstractVerticle
+import io.vertx.core.CompositeFuture
 import io.vertx.core.Future
 import io.vertx.core.Handler
+import io.vertx.core.buffer.Buffer
+import io.vertx.core.http.HttpServer
+import io.vertx.core.http.HttpServerOptions
 import io.vertx.core.http.HttpServerResponse
 import io.vertx.core.json.Json
+import io.vertx.core.net.PemKeyCertOptions
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
 import io.vertx.ext.web.handler.BodyHandler
@@ -36,26 +41,58 @@ class ServerVerticle : AbstractVerticle() {
     private var blogItemSize = 0
 
     override fun start(startFuture: Future<Void>?) {
-        //load data.json
-        val dataJson = ClassLoader.getSystemResource("data.json").readText()
-        initData(dataJson)
+        val keyValue: String? = System.getenv("keyValue")
+        val certValue: String? = System.getenv("certValue")
+
+        if(keyValue == null || certValue == null) {
+            startFuture?.fail("keyValue and/or certValue environment variables are null")
+            return
+        }
+
+        //load our blog from data.json
+        initData()
 
         //construct router and http server
         val router = createRouter()
 
+        val httpServerFuture = Future.future<HttpServer>()
+        val httpsServerFuture = Future.future<HttpServer>()
+
+        //start http on 8080
         vertx.createHttpServer()
                 .requestHandler { router.accept(it) }
-                .listen(config().getInteger("http.port", 8080)) { result ->
-                    if (result.succeeded()) {
-                        println("Up up and away ...")
-                        startFuture?.complete()
-                    } else {
-                        startFuture?.fail(result.cause())
-                    }
-                }
+                .listen(8080, httpServerFuture.completer())
+
+        //start https on 8443
+        vertx.createHttpServer(getSSLOptions(keyValue, certValue)).requestHandler { router.accept(it) }
+                .listen(httpsServerFuture.completer())
+
+        CompositeFuture.all(httpServerFuture, httpsServerFuture).setHandler({ ar ->
+            if (ar.succeeded()) {
+                println("Up up and away on port 8080/8443 ...")
+                startFuture?.complete()
+            } else {
+                // At least one server failed
+                startFuture?.fail(ar.cause())
+            }
+        })
     }
 
-    private fun initData(dataJson: String) {
+    private fun getSSLOptions(keyValue: String?, certValue: String?): HttpServerOptions {
+        //ssl certificate options
+        val pemKeyCertOptions = PemKeyCertOptions()
+        pemKeyCertOptions.keyValue = Buffer.buffer(keyValue)
+        pemKeyCertOptions.certValue = Buffer.buffer(certValue)
+
+        val httpServerOptions = HttpServerOptions()
+        httpServerOptions.isSsl = true
+        httpServerOptions.pemKeyCertOptions = pemKeyCertOptions
+        httpServerOptions.port = 8443
+        return httpServerOptions
+    }
+
+    private fun initData() {
+        val dataJson = ClassLoader.getSystemResource("data.json").readText()
         blogItems = ObjectMapper().registerModule(KotlinModule()).readValue(dataJson)
         blogItemSize = blogItems.size
         totalPages = blogItemSize / ITEMS_PER_PAGE
@@ -66,6 +103,7 @@ class ServerVerticle : AbstractVerticle() {
     }
 
     private fun createRouter() = Router.router(vertx).apply {
+        route().redirectToHttpsHandler()
         route().handler(BodyHandler.create()) //BodyHandler aggregate entire incoming request in memory
         route().handler(FaviconHandler.create()) //serve favicon.ico from classpath
         get("/rest/blog/highestPage").handler(handlerHighestPage)

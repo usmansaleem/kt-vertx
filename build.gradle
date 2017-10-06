@@ -27,15 +27,18 @@ repositories {
 }
 
 dependencies {
+    //vertx dependencies
     compile "io.vertx:vertx-core:$vertx_version"
     compile "io.vertx:vertx-web:$vertx_version"
 
+    //kotlin dependencies
     compile "org.jetbrains.kotlin:kotlin-stdlib-jre8"
     compile "org.jetbrains.kotlin:kotlin-runtime"
 
+    //jackson module for kotlin
     compile "com.fasterxml.jackson.module:jackson-module-kotlin:2.9.0"
 
-
+    //not used at the moment ...
     testCompile "org.jetbrains.kotlin:kotlin-test"
     testCompile "org.jetbrains.kotlin:kotlin-test-junit"
 }
