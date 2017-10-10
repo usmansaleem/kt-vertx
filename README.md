@@ -13,6 +13,27 @@ To build the "fat jar"
 To run the fat jar:
 
     java -jar build/libs/uzi-vertx-shadow.jar
+    
+(This jar can be run anywhere there is a Java 8+ JDK. It contains all the dependencies it needs hence no  need to maintain
+ any libraries on the target machine).    
+    
+**Launching SSL (Https) Server**
+Https server (on port 8443) can be launched by specifying keyValue and certValue system properties which contain public key
+in PKCS8 format and unencrypted private key in PK8 format.
 
-(This jar can be run anywhere there is a Java 8+ JDK. It contains all the dependencies it needs so you don't need to 
-install Vert.x on the target machine).
+Following command can be used to convert PKCS8 to PK8 format if required (Change the filename accordingly).
+
+    openssl pkcs8 -topk8 -inform PEM -outform PEM -in domain.key -out domain.pk8.key -nocrypt
+    
+Following command can be used to export contents of certificate and private key into environment variables:    
+    
+    export certVal=$(cat domain.cer)
+    export keyVal=$(cat domain.pk8.key)    
+
+Pass contents of key and certificate as system property to JVM (make sure to quote them to retain end of lines), for instance:
+
+    java -jar -DkeyValue="$keyVal" -DcertValue="$certVal" build/libs/uzi-vertx-shadow.jar     
+    
+
+_If SSL Http server is launched, all the traffic to http (port 8080) will be redirected to https (to port 443 by default, 
+unless redirectSSLPort system property is specified). The redirectPort can be used in development, for instance_
