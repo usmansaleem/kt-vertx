@@ -1,9 +1,13 @@
 # kt-vertx
-Blogging Software by Usman Saleem - Kotlin and Vertx
+Blogging Software built using Kotlin and Vertx.
 
-It can be run directly in your IDE by creating a run configuration that uses the main class `io.vertx.core.Launcher`
+**Author: Usman Saleem**
+
+**IDE Run Instructions**
+The project can be run directly in IDE by creating a run configuration that uses the main class `io.vertx.core.Launcher`
 and passes in the arguments `run info.usmans.blog.vertx.ServerVerticle`.
 
+**Gradle Build Instructions**
 The build.gradle uses the Gradle shadowJar plugin to assemble the application and all it's dependencies into a single "fat" jar.
 
 To build the "fat jar"
@@ -14,7 +18,7 @@ To run the fat jar:
 
     java -jar build/libs/uzi-vertx-shadow.jar
     
-(This jar can be run anywhere there is a Java 8+ JDK. It contains all the dependencies it needs hence no  need to maintain
+(This jar can be run anywhere there is a Java 8+ JDK. It contains all the dependencies it needs hence no need to maintain
  any libraries on the target machine).    
     
 **Launching SSL (Https) Server**
@@ -27,8 +31,8 @@ Following command can be used to convert PKCS8 to PK8 format if required (Change
     
 Following command can be used to export contents of certificate and private key into environment variables:    
     
-    export certValue="$(cat domain.cer)"
-    export keyValue="$(cat domain.pk8.key)"    
+    export BLOG_CERT="$(cat domain.cer)"
+    export BLOG_KEY="$(cat domain.pk8.key)"    
 
 
 The above can also be passed to docker run command with -e certValue and -e keyValue     
@@ -41,6 +45,6 @@ After creating the fat jar, a docker image can be generated.
 
      docker build -t <sometag> .
      
-To run the docker image, following command can be used
+To run the docker image (both non-SSL and SSL), following command can be used
 
-    docker run -itd -e keyValue -e certValue -p 8443:8443 -p 8080:8080 <sometag>
+    docker run -itd -e BLOG_KEY -e BLOG_CERT -p 8443:8443 -p 8080:8080 <sometag>

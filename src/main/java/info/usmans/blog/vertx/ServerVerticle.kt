@@ -42,8 +42,8 @@ class ServerVerticle : AbstractVerticle() {
     private var blogItemSize = 0
 
     override fun start(startFuture: Future<Void>?) {
-        val keyValue: String? = System.getenv("keyValue")
-        val certValue: String? = System.getenv("certValue")
+        val keyValue: String? = System.getenv("BLOG_KEY")
+        val certValue: String? = System.getenv("BLOG_CERT")
         val redirectSSLPort = System.getProperty("redirectSSLPort", "443").toIntOrNull() ?: 443
         val deploySSL = keyValue != null && certValue != null
 
