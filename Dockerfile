@@ -1,11 +1,18 @@
-FROM anapsix/alpine-java:8_server-jre_unlimited
+FROM anapsix/alpine-java:8_jdk_unlimited
 
-RUN apk --no-cache upgrade
-RUN apk add --no-cache tini paxctl && paxctl -c /opt/jdk/bin/* && paxctl -m /opt/jdk/bin/*
+COPY . /opt/blog/build
+
+WORKDIR /opt/blog/build
+
+RUN apk --no-cache add tini paxctl && \
+paxctl -c /opt/jdk/bin/* && paxctl -m /opt/jdk/bin/* || true && \
+/opt/blog/build/gradlew --no-daemon shadowJar && \
+cp /opt/blog/build/build/libs/uzi-vertx-shadow.jar /opt/blog/ && \
+rm -rf /opt/blog/build/ && \
+rm -rf /root/.gradle/ && \
+rm -rf ./.gradle/
 
 WORKDIR /opt/blog
-
-COPY ./build/libs/uzi-vertx-shadow.jar /opt/blog/
 
 # for hyper.sh comaptibility, specified -s
 ENTRYPOINT ["/sbin/tini", "-s", "-g", "--"]
