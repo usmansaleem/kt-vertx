@@ -4,10 +4,9 @@ COPY . /opt/blog/build
 
 WORKDIR /opt/blog/build
 
-RUN apk --no-cache add tini paxctl && \
-paxctl -c /opt/jdk/bin/* && paxctl -m /opt/jdk/bin/* || true && \
-chmod 777 ./gradlew && \
-./gradlew --no-daemon shadowJar && \
+RUN apk --no-cache add tini paxctl
+RUN paxctl -c /opt/jdk/bin/* && paxctl -m /opt/jdk/bin/* || true
+RUN sh ./gradlew --no-daemon shadowJar && \
 cp /opt/blog/build/build/libs/uzi-vertx-shadow.jar /opt/blog/ && \
 rm -rf /opt/blog/build/ && \
 rm -rf /root/.gradle/ && \
