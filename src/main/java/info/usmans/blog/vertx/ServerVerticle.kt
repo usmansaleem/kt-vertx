@@ -20,42 +20,39 @@ import io.vertx.ext.web.RoutingContext
 import io.vertx.ext.web.handler.BodyHandler
 import io.vertx.ext.web.handler.FaviconHandler
 import io.vertx.ext.web.handler.StaticHandler
+import java.nio.charset.StandardCharsets.UTF_8
+import java.util.*
 
 const val ITEMS_PER_PAGE = 10
 
 class ServerVerticle : AbstractVerticle() {
-    private val defaultCategories by lazy {
-        listOf(Category(1, "Java"),
-                Category(2, "PostgreSQL"),
-                Category(3, "Linux"),
-                Category(4, "IT"),
-                Category(5, "General"),
-                Category(6, "JBoss")
-        )
-    }
+    private val defaultCategories = Json.encode(listOf(
+            Category(1, "Java"),
+            Category(2, "PostgreSQL"),
+            Category(3, "Linux"),
+            Category(4, "IT"),
+            Category(5, "General"),
+            Category(6, "JBoss")
+    ))
 
-    private lateinit var blogItems: List<BlogItem>
-    private val indexedEntries = HashMap<Int, List<BlogItem>>()
+    private val indexedEntries = HashMap<Int, String>()
 
-    private var totalPages = 1
-    private var itemsOnLastPage = ITEMS_PER_PAGE
-    private var blogItemSize = 0
+    private var highestPage: String = ""
+    private var blogCount: String = ""
 
     override fun start(startFuture: Future<Void>?) {
-        val keyValue: String? = System.getenv("BLOG_KEY")
-        val certValue: String? = System.getenv("BLOG_CERT")
-        val redirectSSLPort = System.getProperty("redirectSSLPort", "443").toIntOrNull() ?: 443
+        val keyValue: String? = getKeyValue()
+        val certValue: String? = getCertValue()
         val deploySSL = keyValue != null && certValue != null
-
+        val redirectSSLPort = System.getProperty("redirectSSLPort", "443").toIntOrNull() ?: 443
+        val httpServerFuture = Future.future<HttpServer>()
+        val httpsServerFuture = Future.future<HttpServer>()
 
         //load our blog from data.json
         initData()
 
         //construct router and http server
         val router = createRouter(redirectSSLPort, deploySSL)
-
-        val httpServerFuture = Future.future<HttpServer>()
-        val httpsServerFuture = Future.future<HttpServer>()
 
         //start http on 8080
         vertx.createHttpServer()
@@ -84,7 +81,31 @@ class ServerVerticle : AbstractVerticle() {
         })
     }
 
-    private fun getSSLOptions(keyValue: String?, certValue: String?, sslPort: Int=8443): HttpServerOptions {
+    private fun getCertValue(): String? {
+        val certValueEncoded: String? = System.getenv("BLOG_CERT_BASE64")
+        val certValue: String? = if (certValueEncoded != null) try {
+            Base64.getDecoder().decode(certValueEncoded).toString(UTF_8)
+        } catch (e: IllegalArgumentException) {
+            null
+        }
+        else
+            null
+        return certValue
+    }
+
+    private fun getKeyValue(): String? {
+        val keyValueEncoded: String? = System.getenv("BLOG_KEY_BASE64")
+        val keyValue: String? = if (keyValueEncoded != null) try {
+            Base64.getDecoder().decode(keyValueEncoded).toString(UTF_8)
+        } catch (e: IllegalArgumentException) {
+            null
+        }
+        else
+            null
+        return keyValue
+    }
+
+    private fun getSSLOptions(keyValue: String?, certValue: String?, sslPort: Int = 8443): HttpServerOptions {
         //ssl certificate options
         val pemKeyCertOptions = PemKeyCertOptions()
         pemKeyCertOptions.keyValue = Buffer.buffer(keyValue)
@@ -99,28 +120,31 @@ class ServerVerticle : AbstractVerticle() {
 
     private fun initData() {
         val dataJson = ClassLoader.getSystemResource("data.json").readText()
-        blogItems = ObjectMapper().registerModule(KotlinModule()).readValue(dataJson)
-        blogItemSize = blogItems.size
-        totalPages = blogItemSize / ITEMS_PER_PAGE
-        itemsOnLastPage = blogItemSize % ITEMS_PER_PAGE
+        val blogItems: List<BlogItem> = ObjectMapper().registerModule(KotlinModule()).readValue(dataJson)
+
+        val blogItemCount = blogItems.size
+        val itemsOnLastPage = blogItemCount % ITEMS_PER_PAGE
+        var totalPagesCount = blogItemCount / ITEMS_PER_PAGE
         if (itemsOnLastPage != 0) {
-            totalPages++
+            totalPagesCount++
         }
 
+        highestPage = totalPagesCount.toString()
+        blogCount = blogItemCount.toString()
+
         //index all pages for quick access
-        for (pageNumber in 1..totalPages) {
+        for (pageNumber in 1..totalPagesCount) {
             var endIdx = pageNumber * ITEMS_PER_PAGE
             val startIdx = endIdx - ITEMS_PER_PAGE
 
-            if (pageNumber == totalPages && itemsOnLastPage != 0) {
+            if (pageNumber == totalPagesCount && itemsOnLastPage != 0) {
                 endIdx = startIdx + itemsOnLastPage
             }
-            indexedEntries.put(pageNumber, blogItems.subList(startIdx, endIdx))
+            indexedEntries.put(pageNumber, Json.encode(blogItems.subList(startIdx, endIdx)))
         }
-
     }
 
-    private fun createRouter(redirectSSLPort: Int=443, deploySSL: Boolean=false) = Router.router(vertx).apply {
+    private fun createRouter(redirectSSLPort: Int = 443, deploySSL: Boolean = false) = Router.router(vertx).apply {
         if (deploySSL) route().redirectToHttpsHandler(redirectSSLPort)
         route().handler(BodyHandler.create()) //BodyHandler aggregate entire incoming request in memory
         route().handler(FaviconHandler.create()) //serve favicon.ico from classpath
@@ -132,22 +156,22 @@ class ServerVerticle : AbstractVerticle() {
     }
 
     private val handlerListCategories = Handler<RoutingContext> { req ->
-        req.response().endWithJson(defaultCategories)
+        req.response().sendJson(defaultCategories)
     }
 
-    private val handlerBlogCount = Handler<RoutingContext> { req -> req.response().putHeader("content-type", "text/plain").end(blogItemSize.toString()) }
+    private val handlerBlogCount = Handler<RoutingContext> { req -> req.response().sendPlain(blogCount) }
 
-    private val handlerHighestPage = Handler<RoutingContext> { req -> req.response().putHeader("content-type", "text/plain").end(totalPages.toString()) }
+    private val handlerHighestPage = Handler<RoutingContext> { req -> req.response().sendPlain(highestPage) }
 
     private val handlerMainBlogByPageNumber = Handler<RoutingContext> { req ->
-        val pageNumber = req.request().getParam("pageNumber").toIntOrNull()
+        val pageNumber = req.request().getParam("pageNumber").toIntOrNull() ?: 0
 
-        if (pageNumber != null && pageNumber >= 1 && pageNumber <= totalPages) {
-            val pagedBlogItemsList = indexedEntries.get(pageNumber)
+        if (pageNumber >= 1) {
+            val pagedBlogItemsList = indexedEntries[pageNumber]
             if (pagedBlogItemsList != null) {
-                req.response().endWithJson(pagedBlogItemsList)
+                req.response().sendJson(pagedBlogItemsList)
             } else {
-                req.response().endWithError() //this one is not meant to happen ...
+                req.response().endWithError()
             }
         } else {
             req.response().endWithError()
@@ -157,8 +181,15 @@ class ServerVerticle : AbstractVerticle() {
     /**
      * Extension to the HTTP response to output JSON objects.
      */
-    private fun HttpServerResponse.endWithJson(obj: Any) {
-        this.putHeader("Content-Type", "application/json; charset=utf-8").end(Json.encodePrettily(obj))
+    private fun HttpServerResponse.sendJson(json: String) {
+        this.putHeader("Content-Type", "application/json; charset=utf-8").end(json)
+    }
+
+    /**
+     * Extension to the HTTP response to output plain text.
+     */
+    private fun HttpServerResponse.sendPlain(plain: String) {
+        this.putHeader("Content-Type", "text/plain; charset=utf-8").end(plain)
     }
 
     private fun HttpServerResponse.endWithError() {

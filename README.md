@@ -31,8 +31,8 @@ Following command can be used to convert PKCS8 to PK8 format if required (Change
     
 Following command can be used to export contents of certificate and private key into environment variables:    
     
-    export BLOG_CERT="$(cat domain.cer)"
-    export BLOG_KEY="$(cat domain.pk8.key)"    
+    export BLOG_CERT_BASE64="$(cat domain.cer | base64 --wrap=0)"
+    export BLOG_KEY_BASE64="$(cat domain.pk8.key | base64 --wrap=0)"    
 
 
 The above can also be passed to docker run command with -e certValue and -e keyValue     
@@ -41,10 +41,10 @@ _If SSL Http server is launched, all the traffic to http (port 8080) will be red
 unless redirectSSLPort system property is specified). The redirectPort can be used in development, for instance_
 
 **Docker build**
-After creating the fat jar, a docker image can be generated.
+The docker build can be used to compile the project ready to run:
 
      docker build -t <sometag> .
      
 To run the docker image (both non-SSL and SSL), following command can be used
 
-    docker run -itd -e BLOG_KEY -e BLOG_CERT -p 8443:8443 -p 8080:8080 <sometag>
+    docker run -itd -e BLOG_CERT_BASE64 -e BLOG_KEY_BASE64 -p 8443:8443 -p 8080:8080 <sometag>
