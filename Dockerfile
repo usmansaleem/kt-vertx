@@ -20,7 +20,7 @@ WORKDIR /opt/blog
 # for hyper.sh comaptibility, specified -s
 ENTRYPOINT ["/sbin/tini", "-s", "-g", "--"]
 
-CMD ["/opt/jdk/bin/java", "-Xmx124M", "-XX:+UnlockExperimentalVMOptions", "-XX:+UseCGroupMemoryLimitForHeap", "-XX:+UseG1GC", "-jar", "/opt/blog/uzi-vertx-shadow.jar"]
+CMD ["/opt/jdk/bin/java", "-XX:+UnlockExperimentalVMOptions","-XX:+UseG1GC", "-jar", "/opt/blog/uzi-vertx-shadow.jar"]
 
 EXPOSE 8080 8443
 
