@@ -145,8 +145,8 @@ class ServerVerticle : AbstractVerticle() {
     }
 
     private fun createRouter(redirectSSLPort: Int = 443, deploySSL: Boolean = false) = Router.router(vertx).apply {
-        if (deploySSL) route().redirectToHttpsHandler(redirectSSLPort)
         route().handler(BodyHandler.create()) //BodyHandler aggregate entire incoming request in memory
+        if (deploySSL) route().redirectToHttpsHandler(redirectSSLPort)
         route().handler(FaviconHandler.create()) //serve favicon.ico from classpath
         get("/rest/blog/highestPage").handler(handlerHighestPage)
         get("/rest/blog/listCategories").handler(handlerListCategories)
