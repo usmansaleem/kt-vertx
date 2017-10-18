@@ -16,7 +16,7 @@ jobs:
           keys:
           - kt-vertx-blog-{{ checksum "build.gradle" }}
 
-      - run: ./gradlew shadowJar
+      - run: sh ./gradlew shadowJar
 
       - save_cache:
           paths:
