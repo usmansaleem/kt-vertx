@@ -5,6 +5,9 @@
 .gitignore
 build/
 
+#Dont ignore our artifact
+!build/libs/uzi-vertx-shadow.jar
+
 
 # Ignore Gradle related stuff which is specific to build environment
 gradle-app.setting
