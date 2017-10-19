@@ -1,8 +1,8 @@
 package info.usmans.blog.vertx
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.KotlinModule
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import info.usmans.blog.model.BlogItem
 import info.usmans.blog.model.Category
 import io.vertx.core.AbstractVerticle
@@ -24,6 +24,16 @@ import java.util.*
 const val ITEMS_PER_PAGE = 10
 
 class ServerVerticle : AbstractVerticle() {
+    init {
+        Json.mapper.apply {
+            registerKotlinModule()
+        }
+
+        Json.prettyMapper.apply {
+            registerKotlinModule()
+        }
+    }
+
     private val defaultCategories = Json.encode(listOf(
             Category(1, "Java"),
             Category(2, "PostgreSQL"),
@@ -107,7 +117,8 @@ class ServerVerticle : AbstractVerticle() {
 
     private fun initData() {
         val dataJson = ClassLoader.getSystemResource("data.json").readText()
-        val blogItems: List<BlogItem> = ObjectMapper().registerModule(KotlinModule()).readValue(dataJson)
+        val mapper = jacksonObjectMapper()
+        val blogItems: List<BlogItem> = mapper.readValue(dataJson)
 
         val blogItemCount = blogItems.size
         val itemsOnLastPage = blogItemCount % ITEMS_PER_PAGE
