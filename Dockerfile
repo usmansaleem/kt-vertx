@@ -11,7 +11,7 @@ paxctl -m /opt/jdk/bin/java
 # for hyper.sh comaptibility, specified -s
 ENTRYPOINT ["/sbin/tini", "-s", "-g", "--"]
 
-CMD ["/opt/jdk/bin/java", "-XX:+UnlockExperimentalVMOptions","-XX:+UseG1GC", "-jar", "/opt/blog/uzi-vertx-shadow.jar"]
+CMD ["/opt/jdk/bin/java", "-Xms126m", "-Xmx126m", "-XX:+UnlockExperimentalVMOptions","-XX:+UseG1GC", "-jar", "/opt/blog/uzi-vertx-shadow.jar"]
 
 EXPOSE 8080 8443
 

@@ -6,11 +6,9 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import info.usmans.blog.model.BlogItem
 import info.usmans.blog.model.Category
 import io.vertx.core.AbstractVerticle
-import io.vertx.core.CompositeFuture
 import io.vertx.core.Future
 import io.vertx.core.Handler
 import io.vertx.core.buffer.Buffer
-import io.vertx.core.http.HttpServer
 import io.vertx.core.http.HttpServerOptions
 import io.vertx.core.http.HttpServerResponse
 import io.vertx.core.json.Json
@@ -45,40 +43,29 @@ class ServerVerticle : AbstractVerticle() {
         val certValue: String? = getCertValue()
         val deploySSL = keyValue != null && certValue != null
         val redirectSSLPort = System.getProperty("redirectSSLPort", "443").toIntOrNull() ?: 443
-        val httpServerFuture = Future.future<HttpServer>()
-        val httpsServerFuture = Future.future<HttpServer>()
 
         //load our blog from data.json
         initData()
 
         //construct router and http server
-        val router = createRouter(redirectSSLPort, deploySSL)
+        val router = createRouter()
 
-        //start http on 8080
-        vertx.createHttpServer()
-                .requestHandler { router.accept(it) }
-                .listen(8080, httpServerFuture.completer())
-
-        //start https on 8443
         if (deploySSL) {
-            vertx.createHttpServer(getSSLOptions(keyValue, certValue, 8443)).requestHandler { router.accept(it) }
-                    .listen(httpsServerFuture.completer())
+            println("Deploying Http Server (SSL) on port 8443")
+            //deploy this verticle with SSL
+            vertx.createHttpServer(getSSLOptions(keyValue, certValue, 8443)).requestHandler { router.accept(it) }.listen()
+
+            //deploy nonsecure forwarding verticle with 302 logic ...
+            vertx.deployVerticle(ForwardingServerVerticle(redirectSSLPort))
         } else {
-            httpsServerFuture.complete()
+            println("Deploying Http Server on port 8080")
+            //deploy non secure server
+            vertx.createHttpServer()
+                    .requestHandler { router.accept(it) }
+                    .listen(8080)
         }
 
-        CompositeFuture.all(httpServerFuture, httpsServerFuture).setHandler({ ar ->
-            if (ar.succeeded()) {
-                println("Deployed on 8080: true")
-                println("SSL Deployed on 8443: " + deploySSL)
-                startFuture?.complete()
-            } else {
-                println("Deployed on 8080: failed")
-                println("SSL Deployed on 8443: failed")
-                // At least one server failed
-                startFuture?.fail(ar.cause())
-            }
-        })
+        startFuture?.complete()
     }
 
     private fun getCertValue(): String? {
@@ -144,9 +131,9 @@ class ServerVerticle : AbstractVerticle() {
         }
     }
 
-    private fun createRouter(redirectSSLPort: Int = 443, deploySSL: Boolean = false) = Router.router(vertx).apply {
+    private fun createRouter() = Router.router(vertx).apply {
         route().handler(BodyHandler.create()) //BodyHandler aggregate entire incoming request in memory
-        if (deploySSL) route().redirectToHttpsHandler(redirectSSLPort)
+        //if (deploySSL) route().redirectToHttpsHandler(redirectSSLPort)
         route().handler(FaviconHandler.create()) //serve favicon.ico from classpath
         get("/rest/blog/highestPage").handler(handlerHighestPage)
         get("/rest/blog/listCategories").handler(handlerListCategories)
