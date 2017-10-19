@@ -34,6 +34,7 @@ dependencies {
     //kotlin dependencies
     compile "org.jetbrains.kotlin:kotlin-stdlib-jre8"
     compile "org.jetbrains.kotlin:kotlin-runtime"
+    compile "org.jetbrains.kotlin:kotlin-reflect"
 
     //jackson module for kotlin
     compile "com.fasterxml.jackson.module:jackson-module-kotlin:2.9.0"
