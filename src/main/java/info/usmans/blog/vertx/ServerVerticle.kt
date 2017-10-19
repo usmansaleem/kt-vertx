@@ -117,6 +117,7 @@ class ServerVerticle : AbstractVerticle() {
 
     private fun initData() {
         val dataJson = ClassLoader.getSystemResource("data.json").readText()
+        println(dataJson)
         val mapper = jacksonObjectMapper()
         val blogItems: List<BlogItem> = mapper.readValue(dataJson)
 
