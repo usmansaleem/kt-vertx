@@ -45,6 +45,10 @@ The docker build can be used to compile the project ready to run:
 
      docker build -t <sometag> .
      
-To run the docker image (both non-SSL and SSL), following command can be used
+To run the docker image (both non-SSL and SSL), following command can be used.
 
     docker run -itd -e BLOG_CERT_BASE64 -e BLOG_KEY_BASE64 -p 8443:8443 -p 8080:8080 <sometag>
+	
+To limit the JVM memory parameters (specially required in container environment) additional environment variable MEM_OPTS can be passed
+	
+    docker run -itd -e MEM_OPTS="-Xmx120m -XX:MaxRAM=128m" -e BLOG_CERT_BASE64 -e BLOG_KEY_BASE64 -p 8443:8443 -p 8080:8080 <sometag>

@@ -10,6 +10,7 @@ import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.HttpServerOptions
 import io.vertx.core.http.HttpServerResponse
 import io.vertx.core.json.Json
+import io.vertx.core.net.OpenSSLEngineOptions
 import io.vertx.core.net.PemKeyCertOptions
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
@@ -49,7 +50,6 @@ class ServerVerticle : AbstractVerticle() {
     override fun start(startFuture: Future<Void>?) {
         val keyValue: String? = getKeyValue()
         val certValue: String? = getCertValue()
-        val deploySSL = keyValue != null && certValue != null
         val redirectSSLPort = System.getProperty("redirectSSLPort", "443").toIntOrNull() ?: 443
 
         //load our blog from data.json
@@ -58,7 +58,7 @@ class ServerVerticle : AbstractVerticle() {
         //construct router and http server
         val router = createRouter()
 
-        if (deploySSL) {
+        if (keyValue != null && certValue != null) {
             println("Deploying Http Server (SSL) on port 8443")
             //deploy this verticle with SSL
             vertx.createHttpServer(getSSLOptions(keyValue, certValue, 8443)).apply {
@@ -119,17 +119,16 @@ class ServerVerticle : AbstractVerticle() {
             null
     }
 
-    private fun getSSLOptions(keyValue: String?, certValue: String?, sslPort: Int = 8443): HttpServerOptions {
-        //ssl certificate options
-        val pemKeyCertOptions = PemKeyCertOptions()
-        pemKeyCertOptions.keyValue = Buffer.buffer(keyValue)
-        pemKeyCertOptions.certValue = Buffer.buffer(certValue)
-
-        val httpServerOptions = HttpServerOptions()
-        httpServerOptions.isSsl = true
-        httpServerOptions.pemKeyCertOptions = pemKeyCertOptions
-        httpServerOptions.port = sslPort
-        return httpServerOptions
+    private fun getSSLOptions(blogKeyValue: String, blogCertValue: String, sslPort: Int = 8443): HttpServerOptions {
+        return HttpServerOptions().apply {
+            isSsl = true
+            pemKeyCertOptions = PemKeyCertOptions().apply {
+                keyValue = Buffer.buffer(blogKeyValue)
+                certValue = Buffer.buffer(blogCertValue)
+            }
+            port = sslPort
+            sslEngineOptions = OpenSSLEngineOptions()
+        }
     }
 
     private fun initData() {

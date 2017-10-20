@@ -30,6 +30,7 @@ dependencies {
     //vertx dependencies
     compile "io.vertx:vertx-core:$vertx_version"
     compile "io.vertx:vertx-web:$vertx_version"
+    compile "io.netty:netty-tcnative-boringssl-static:1.1.33.Fork26"
 
     //kotlin dependencies
     compile "org.jetbrains.kotlin:kotlin-stdlib-jre8"
