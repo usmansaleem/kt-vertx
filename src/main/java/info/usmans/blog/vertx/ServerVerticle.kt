@@ -134,7 +134,7 @@ class ServerVerticle : AbstractVerticle() {
     private fun initData() {
         val dataJson = vertx.fileSystem().readFileBlocking("data.json")
         @Suppress("UNCHECKED_CAST")
-        val blogItems: List<BlogItem> = dataJson.toJsonArray().list as List<BlogItem>
+        val blogItems: List<BlogItem> = dataJson.toJsonArray().list.asReversed() as List<BlogItem>
 
         val blogItemCount = blogItems.size
         val itemsOnLastPage = blogItemCount % ITEMS_PER_PAGE
@@ -154,7 +154,7 @@ class ServerVerticle : AbstractVerticle() {
             if (pageNumber == totalPagesCount && itemsOnLastPage != 0) {
                 endIdx = startIdx + itemsOnLastPage
             }
-            indexedEntries.put(pageNumber, Json.encode(blogItems.subList(startIdx, endIdx)))
+            indexedEntries.put(pageNumber, Json.encode(blogItems.subList(startIdx, endIdx).asReversed()))
         }
     }
 

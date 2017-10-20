@@ -80,8 +80,23 @@ blogApp.controller('mainCtrl', function($scope, $http, $log, $sce) {
            });
     };
 
-    $scope.bigCurrentPage = 1;
+    //function to get highestPage
+    $scope.getHighestPage = function() {
+        $http.get('rest/blog/highestPage').then(function(response) {
+            $scope.bigCurrentPage =  response.data; //always go to last page ...
+            $scope.lastPage = response.data;
+        });
+    };
+
+    //function to show jumbotron
+    $scope.showJumbotron = function() {
+        return $scope.lastPage === $scope.bigCurrentPage
+    }
+
+    //call initial methods
+    $scope.getHighestPage();
     $scope.getBlogCount();
+
 });
 
 // create the controller and inject Angular's $scope

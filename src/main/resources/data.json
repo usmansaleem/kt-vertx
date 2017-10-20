@@ -1,5 +1,26 @@
 [
   {
+    "id": 181,
+    "title": "Migrating blogging software to vertx3, kotlin, gradle, circleci and docker",
+    "body": "Finished migrating the blogging software to vertx3 using kotlin. Gradle is used as build tool while <a href=\"https://circleci.com\" target=\"_blank\">circleci</a> is used as cloud based CI environment. The hosting is moved from Openshift to <a href=\"https://hyper.sh\" target=\"_blank\">hyper.sh</a>. The code is as usual available on <a href=\"https://github.com/usmansaleem/kt-vertx\" target=\"_blank\">Github</a>",
+    "categories": [
+      {
+        "id": 1,
+        "name": "Java"
+      },
+      {
+        "id": 4,
+        "name": "IT"
+      }
+    ],
+    "blogSection": null,
+    "createdOn": "2017-05-31",
+    "modifiedOn": "2017-05-31",
+    "createDay": "31",
+    "createMonth": "May",
+    "createYear": "2017"
+  },
+  {
     "id": 180,
     "title": "Working with multiple git repo from parent directory",
     "body": "The following git configuration can be used to work with multiple git repositories from same parent directory. Really useful for a project with multiple git repos. Usage would be <code>git all pull</code> or <code>git all status</code>.<br>[alias]\n   all = \"!sh -c \\\"find . -mindepth 1 -maxdepth 1 -type d -print -exec git -C {} $1 \\\\;\\\" -\"",
