@@ -1,7 +1,5 @@
 package info.usmans.blog.vertx
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import info.usmans.blog.model.BlogItem
 import info.usmans.blog.model.Category
@@ -63,43 +61,62 @@ class ServerVerticle : AbstractVerticle() {
         if (deploySSL) {
             println("Deploying Http Server (SSL) on port 8443")
             //deploy this verticle with SSL
-            vertx.createHttpServer(getSSLOptions(keyValue, certValue, 8443)).requestHandler { router.accept(it) }.listen()
+            vertx.createHttpServer(getSSLOptions(keyValue, certValue, 8443)).apply {
+                requestHandler(router::accept)
+                listen({ httpServerlistenHandler ->
+                    if (httpServerlistenHandler.succeeded()) {
+                        //deploy nonsecure forwarding verticle on port 8080...
+                        println("Http Server (SSL) on port 8443 Deployed. Deploying Forwarding Verticle on 8080...")
+                        vertx.deployVerticle(ForwardingServerVerticle(redirectSSLPort), { verticleHandler ->
+                            if (verticleHandler.succeeded())
+                                startFuture?.succeeded()
+                            else
+                                startFuture?.fail(verticleHandler.cause())
+                        })
 
-            //deploy nonsecure forwarding verticle with 302 logic ...
-            vertx.deployVerticle(ForwardingServerVerticle(redirectSSLPort))
+                    } else
+                        startFuture?.fail(httpServerlistenHandler.cause())
+
+                })
+            }
         } else {
             println("Deploying Http Server on port 8080")
             //deploy non secure server
-            vertx.createHttpServer()
-                    .requestHandler { router.accept(it) }
-                    .listen(8080)
+            vertx.createHttpServer().apply {
+                requestHandler(router::accept)
+                listen(8080, { handler ->
+                    if (handler.succeeded()) {
+                        startFuture?.complete()
+                    } else {
+                        startFuture?.fail(handler.cause())
+                    }
+                })
+            }
         }
 
-        startFuture?.complete()
+
     }
 
     private fun getCertValue(): String? {
         val certValueEncoded: String? = System.getenv("BLOG_CERT_BASE64")
-        val certValue: String? = if (certValueEncoded != null) try {
+        return if (certValueEncoded != null) try {
             Base64.getDecoder().decode(certValueEncoded).toString(UTF_8)
         } catch (e: IllegalArgumentException) {
             null
         }
         else
             null
-        return certValue
     }
 
     private fun getKeyValue(): String? {
         val keyValueEncoded: String? = System.getenv("BLOG_KEY_BASE64")
-        val keyValue: String? = if (keyValueEncoded != null) try {
+        return if (keyValueEncoded != null) try {
             Base64.getDecoder().decode(keyValueEncoded).toString(UTF_8)
         } catch (e: IllegalArgumentException) {
             null
         }
         else
             null
-        return keyValue
     }
 
     private fun getSSLOptions(keyValue: String?, certValue: String?, sslPort: Int = 8443): HttpServerOptions {
@@ -116,10 +133,9 @@ class ServerVerticle : AbstractVerticle() {
     }
 
     private fun initData() {
-        val dataJson = ClassLoader.getSystemResource("data.json").readText()
-        println(dataJson)
-        val mapper = jacksonObjectMapper()
-        val blogItems: List<BlogItem> = mapper.readValue(dataJson)
+        val dataJson = vertx.fileSystem().readFileBlocking("data.json")
+        @Suppress("UNCHECKED_CAST")
+        val blogItems: List<BlogItem> = dataJson.toJsonArray().list as List<BlogItem>
 
         val blogItemCount = blogItems.size
         val itemsOnLastPage = blogItemCount % ITEMS_PER_PAGE
