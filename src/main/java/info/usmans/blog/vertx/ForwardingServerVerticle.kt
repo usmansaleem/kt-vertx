@@ -9,7 +9,7 @@ class ForwardingServerVerticle(val redirectSSLPort: Int = 443) : AbstractVerticl
 
         vertx.createHttpServer().apply {
             requestHandler({ request ->
-                request.redirectToHttps(redirectSSLPort)
+                request.redirectToSecure(redirectSSLPort)
             })
             listen(8080, {handler ->
                 if(handler.succeeded()) {
