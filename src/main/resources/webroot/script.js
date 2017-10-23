@@ -83,8 +83,9 @@ blogApp.controller('mainCtrl', function($scope, $http, $log, $sce) {
     //function to get highestPage
     $scope.getHighestPage = function() {
         $http.get('rest/blog/highestPage').then(function(response) {
-            $scope.bigCurrentPage =  response.data; //always go to last page ...
-            $scope.lastPage = response.data;
+            $scope.bigCurrentPage =  response.data;
+            $scope.lastPage = $scope.bigCurrentPage;
+            $scope.getBlogCount()
         });
     };
 
@@ -95,8 +96,7 @@ blogApp.controller('mainCtrl', function($scope, $http, $log, $sce) {
 
     //call initial methods
     $scope.getHighestPage();
-    $scope.getBlogCount();
-
+    
 });
 
 // create the controller and inject Angular's $scope
