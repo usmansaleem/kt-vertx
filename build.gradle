@@ -1,5 +1,5 @@
 buildscript {
-    ext.vertx_version = '3.4.2'
+    ext.vertx_version = '3.5.0'
 
     repositories {
         jcenter()
@@ -30,7 +30,7 @@ dependencies {
     //vertx dependencies
     compile "io.vertx:vertx-core:$vertx_version"
     compile "io.vertx:vertx-web:$vertx_version"
-    compile "io.netty:netty-tcnative-boringssl-static:1.1.33.Fork26"
+    compile "io.netty:netty-tcnative-boringssl-static:2.0.6.Final"
 
     //kotlin dependencies
     compile "org.jetbrains.kotlin:kotlin-stdlib-jre8"
