@@ -12,11 +12,14 @@ import io.vertx.core.http.HttpServerResponse
 import io.vertx.core.json.Json
 import io.vertx.core.net.OpenSSLEngineOptions
 import io.vertx.core.net.PemKeyCertOptions
+import io.vertx.ext.auth.oauth2.AccessToken
+import io.vertx.ext.auth.oauth2.OAuth2Auth
+import io.vertx.ext.auth.oauth2.OAuth2ClientOptions
+import io.vertx.ext.auth.oauth2.OAuth2FlowType
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
-import io.vertx.ext.web.handler.BodyHandler
-import io.vertx.ext.web.handler.FaviconHandler
-import io.vertx.ext.web.handler.StaticHandler
+import io.vertx.ext.web.handler.*
+import io.vertx.ext.web.sstore.LocalSessionStore
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.*
 
@@ -48,8 +51,7 @@ class ServerVerticle : AbstractVerticle() {
     private var blogCount: String = ""
 
     override fun start(startFuture: Future<Void>?) {
-        val keyValue: String? = getKeyValue()
-        val certValue: String? = getCertValue()
+        val (keyValue, certValue) = Pair(getKeyValue(), getCertValue())
         val redirectSSLPort = System.getProperty("redirectSSLPort", "443").toIntOrNull() ?: 443
 
         //load our blog from data.json
@@ -119,6 +121,8 @@ class ServerVerticle : AbstractVerticle() {
             null
     }
 
+    private fun getOAuthCred() = Pair(System.getenv("OAUTH_CLIENT_ID"), System.getenv("OAUTH_CLIENT_SECRET"))
+
     private fun getSSLOptions(blogKeyValue: String, blogCertValue: String, sslPort: Int = 8443): HttpServerOptions {
         return HttpServerOptions().apply {
             isSsl = true
@@ -160,13 +164,68 @@ class ServerVerticle : AbstractVerticle() {
 
     private fun createRouter() = Router.router(vertx).apply {
         route().handler(BodyHandler.create()) //BodyHandler aggregate entire incoming request in memory
-        //if (deploySSL) route().redirectToHttpsHandler(redirectSSLPort)
+
+        //our standard routes
         route().handler(FaviconHandler.create()) //serve favicon.ico from classpath
         get("/rest/blog/highestPage").handler(handlerHighestPage)
         get("/rest/blog/listCategories").handler(handlerListCategories)
         get("/rest/blog/blogCount").handler(handlerBlogCount)
         get("/rest/blog/blogItems/:pageNumber").handler(handlerMainBlogByPageNumber)
+
+        secureRoutes()
+
+        //static pages
         route("/*").handler(StaticHandler.create()) //serve static contents from webroot folder on classpath
+    }
+
+    private fun Router.secureRoutes() {
+        val (oauthClientId, oauthClientSecret) = getOAuthCred()
+        if (oauthClientId.isNullOrBlank() || oauthClientSecret.isNullOrBlank()) {
+            println("OAuth is not setup because OAUTH_CLIENT_ID and OAUTH_CLIENT_SECRET is null")
+        } else {
+            //cookie handler and session handler for OAuth2 authz and authn
+            route().handler(CookieHandler.create());
+            route().handler(SessionHandler.create(LocalSessionStore.create(vertx)));
+
+            println("Securing routes under /protected ...")
+            //1. Create our custom Auth Provider for Auth0
+            val authProvider = OAuth2Auth.create(vertx, OAuth2FlowType.AUTH_CODE, OAuth2ClientOptions().apply {
+                clientID = oauthClientId
+                clientSecret = oauthClientSecret
+                site = "https://uzi.au.auth0.com"
+                tokenPath = "/oauth/token"
+                authorizationPath = "/authorize"
+                userInfoPath = "/userinfo"
+            })
+
+            // We need a user session handler too to make sure
+            // the user is stored in the session between requests
+            route().handler(UserSessionHandler.create(authProvider));
+
+            // we now protect the resource under the path "/protected"
+            route("/protected/*").handler(
+                    OAuth2AuthHandler.create(authProvider, "https://usmans.info")
+                            // we now configure the oauth2 handler, it will
+                            // setup the callback handler
+                            // as expected by your oauth2 provider.
+                            .setupCallback(route("/callback"))
+                            // for this resource we require that users have
+                            // the authority to retrieve the user emails
+                            .addAuthority("openid email")
+            );
+
+            get("/protected").handler({ ctx ->
+                //TODO: Redirect to submit form or something here ...
+                val accessToken: AccessToken? = ctx.user() as AccessToken
+                //for now simply dump the access token
+                ctx.response().end(accessToken?.principal()?.encodePrettily())
+            })
+
+            get("/protected/info").handler({ ctx ->
+                //TODO: Redirect to submit form or something here ...
+                ctx.response().end("Welcome to protected world!")
+            })
+        }
     }
 
     private val handlerListCategories = Handler<RoutingContext> { req ->
