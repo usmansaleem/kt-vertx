@@ -1,6 +1,7 @@
 package info.usmans.blog.vertx
 
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import info.usmans.blog.handler.Auth0AuthHandler
 import info.usmans.blog.model.BlogItem
 import info.usmans.blog.model.Category
 import io.vertx.core.AbstractVerticle
@@ -204,11 +205,7 @@ class ServerVerticle : AbstractVerticle() {
 
             // we now protect the resource under the path "/protected"
             route("/protected/*").handler(
-                    OAuth2AuthHandler.create(authProvider, "https://usmans.info")
-                            // we now configure the oauth2 handler, it will
-                            // setup the callback handler
-                            // as expected by your oauth2 provider.
-                            .setupCallback(route("/callback"))
+                    Auth0AuthHandler(authProvider, get("/callback"))
                             // for this resource we require that users have
                             // the authority to retrieve the user emails
                             .addAuthority("openid email")
