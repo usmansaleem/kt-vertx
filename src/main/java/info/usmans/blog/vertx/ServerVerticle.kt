@@ -185,8 +185,8 @@ class ServerVerticle : AbstractVerticle() {
             println("OAuth is not setup because OAUTH_CLIENT_ID and OAUTH_CLIENT_SECRET is null")
         } else {
             //cookie handler and session handler for OAuth2 authz and authn
-            route().handler(CookieHandler.create());
-            route().handler(SessionHandler.create(LocalSessionStore.create(vertx)));
+            route().handler(CookieHandler.create())
+            route().handler(SessionHandler.create(LocalSessionStore.create(vertx)))
 
             println("Securing routes under /protected ...")
             //1. Create our custom Auth Provider for Auth0
@@ -197,19 +197,20 @@ class ServerVerticle : AbstractVerticle() {
                 tokenPath = "/oauth/token"
                 authorizationPath = "/authorize"
                 userInfoPath = "/userinfo"
+                isJwtToken = false
             })
 
             // We need a user session handler too to make sure
             // the user is stored in the session between requests
-            route().handler(UserSessionHandler.create(authProvider));
+            route().handler(UserSessionHandler.create(authProvider))
 
             // we now protect the resource under the path "/protected"
             route("/protected/*").handler(
                     Auth0AuthHandler(authProvider, get("/callback"))
                             // for this resource we require that users have
                             // the authority to retrieve the user emails
-                            .addAuthority("openid email")
-            );
+                            .addAuthority("openid profile email")
+            )
 
             get("/protected").handler({ ctx ->
                 //TODO: Redirect to submit form or something here ...

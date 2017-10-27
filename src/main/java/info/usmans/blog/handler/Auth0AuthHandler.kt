@@ -1,10 +1,12 @@
 package info.usmans.blog.handler
 
+import info.usmans.blog.vertx.getOAuthRedirectURI
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Handler
 import io.vertx.core.http.HttpHeaders
 import io.vertx.core.http.HttpMethod
+import io.vertx.core.http.HttpServerRequest
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.auth.oauth2.OAuth2Auth
@@ -14,9 +16,7 @@ import io.vertx.ext.web.RoutingContext
 import io.vertx.ext.web.handler.AuthHandler
 import io.vertx.ext.web.handler.impl.AuthHandlerImpl
 import io.vertx.ext.web.handler.impl.HttpStatusException
-import java.net.URI
 import java.util.*
-
 
 
 /**
@@ -33,18 +33,16 @@ class Auth0AuthHandler(private val oAuthProvider: OAuth2Auth, private val callba
     private val badRequestHttpStatus = HttpStatusException(400)
 
 
-
     init {
         //verify provider
         if (oAuthProvider.flowType != OAuth2FlowType.AUTH_CODE) {
             throw IllegalArgumentException("OAuth2Auth + Bearer Auth requires OAuth2 AUTH_CODE flow")
 
         }
+        //In case of Auth0, it is always false.
         supportJWT = oAuthProvider.hasJWTToken()
 
-        //setup callback right here as well
         setupCallback()
-
     }
 
 
@@ -56,7 +54,6 @@ class Auth0AuthHandler(private val oAuthProvider: OAuth2Auth, private val callba
                 } else {
                     // if the provider supports JWT we can try to validate the Authorization header
                     val token: String? = parseAuthorization.result()
-
                     if (!token.isNullOrEmpty()) {
                         oAuthProvider.decodeToken(token) { decodeToken ->
                             if (decodeToken.failed()) {
@@ -71,15 +68,15 @@ class Auth0AuthHandler(private val oAuthProvider: OAuth2Auth, private val callba
                 }
             })
         }
-        handler.handle(Future.failedFuture(HttpStatusException(302, authURI(context.request().uri(), context.request().absoluteURI()))))
+        handler.handle(Future.failedFuture(HttpStatusException(302, authURI(context.request().uri(), context.request()))))
     }
 
-    private fun authURI(redirectURL: String, absoluteURI: String): String {
+    private fun authURI(redirectURL: String, request: HttpServerRequest): String {
         val config = JsonObject()
                 .put("state", redirectURL)
 
         //obtain the host name from absolute URI instead of pinning it
-        config.put("redirect_uri", getRedirectURI(URI(absoluteURI)))
+        config.put("redirect_uri", request.getOAuthRedirectURI(callback.path))
 
         if (extraParams != null) {
             config.mergeIn(extraParams)
@@ -120,8 +117,7 @@ class Auth0AuthHandler(private val oAuthProvider: OAuth2Auth, private val callba
 
 
             //use the hostname from request based on how our site is accessed
-            config.put("redirect_uri", getRedirectURI(URI(ctx.request().absoluteURI())))
-
+            config.put("redirect_uri", ctx.request().getOAuthRedirectURI(callback.path))
 
             if (extraParams != null) {
                 config.mergeIn(extraParams)
@@ -154,13 +150,7 @@ class Auth0AuthHandler(private val oAuthProvider: OAuth2Auth, private val callba
                 }
             }
         }
-
-
-
     }
-
-    private fun getRedirectURI(redirectURI: URI) =
-            redirectURI.scheme + "://" + redirectURI.authority + callback.path
 
     override fun addAuthority(authority: String): AuthHandler {
         scopes.add(authority)
