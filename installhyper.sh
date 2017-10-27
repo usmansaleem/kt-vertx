@@ -1,3 +1,6 @@
+#! /bin/bash
+
+# hyper version 1.10.16
 set -x
 set -e
 
