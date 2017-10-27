@@ -15,7 +15,9 @@ jobs:
       - restore_cache:
           keys:
           - kt-vertx-blog-{{ checksum "build.gradle" }}
-          - hyper
+      - restore_cache:
+          keys:
+          - hyper    
 
       - run: sh ./gradlew shadowJar
       - run: bash ./installhyper.sh  
