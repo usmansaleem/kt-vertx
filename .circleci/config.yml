@@ -15,13 +15,19 @@ jobs:
       - restore_cache:
           keys:
           - kt-vertx-blog-{{ checksum "build.gradle" }}
+          - hyper
 
       - run: sh ./gradlew shadowJar
+      - run: bash ./installhyper.sh  
 
       - save_cache:
           paths:
             - ~/.gradle
           key: kt-vertx-blog-{{ checksum "build.gradle" }}
+      - save_cache:
+          paths:
+            - ./hyper
+          key: hyper
 
       - run: |
           TAG=$(echo 0.1.$CIRCLE_BUILD_NUM-$CIRCLE_BRANCH | tr / -)
@@ -32,3 +38,4 @@ jobs:
             then docker tag $NAME:$TAG $NAME:latest;
           fi
           docker push $NAME
+      - run: ./hyper/hyper version    
