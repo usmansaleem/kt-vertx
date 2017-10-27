@@ -42,7 +42,7 @@ jobs:
           docker push $NAME
       - run: |
           ./hyper/hyper version
-          if [ "${CIRCLE_BRANCH}" == "master" ];
+          if [ "${CIRCLE_BRANCH}" == "master" ]; then
             ./hyper/hyper rm -f blog
             ./hyper/hyper rmi usmans/blog:latest
             ./hyper/hyper run -itd --size=s3 --name=blog -e BLOG_CERT_BASE64 -e BLOG_KEY_BASE64 -e OAUTH_CLIENT_ID -e OAUTH_CLIENT_SECRET -p 80:8080 -p 443:8443 usmans/blog:latest
