@@ -1,5 +1,6 @@
 package info.usmans.blog.vertx
 
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import info.usmans.blog.handler.Auth0AuthHandler
 import info.usmans.blog.model.BlogItem
@@ -46,7 +47,8 @@ class ServerVerticle : AbstractVerticle() {
             Category(6, "JBoss")
     ))
 
-    private val indexedEntries = HashMap<Int, String>()
+    private var pagedBlogItems: Map<Int, List<BlogItem>> = mapOf()
+    private var blogItemMap = TreeMap<Long, BlogItem>()
 
     private var highestPage: String = ""
     private var blogCount: String = ""
@@ -137,21 +139,25 @@ class ServerVerticle : AbstractVerticle() {
     }
 
     private fun initData() {
+        blogItemMap.putAll(initializeBlogItemMap())
+        initPagedBlogItems()
+    }
+
+    internal fun initializeBlogItemMap(): Map<Long, BlogItem> {
         val dataJson = vertx.fileSystem().readFileBlocking("data.json")
-        @Suppress("UNCHECKED_CAST")
-        val blogItems: List<BlogItem> = dataJson.toJsonArray().list.asReversed() as List<BlogItem>
+        val blogItemsOrig: List<BlogItem> = Json.mapper.readValue(dataJson.toString())
+        return blogItemsOrig.associateBy({ it.id }) { it }
+    }
 
-        val blogItemCount = blogItems.size
+    private fun initPagedBlogItems() {
+        val blogItemCount = blogItemMap.size
         val itemsOnLastPage = blogItemCount % ITEMS_PER_PAGE
-        var totalPagesCount = blogItemCount / ITEMS_PER_PAGE
-        if (itemsOnLastPage != 0) {
-            totalPagesCount++
-        }
-
-        highestPage = totalPagesCount.toString()
-        blogCount = blogItemCount.toString()
+        val totalPagesCount = if (itemsOnLastPage == 0) blogItemCount / ITEMS_PER_PAGE else blogItemCount / ITEMS_PER_PAGE + 1
 
         //index all pages for quick access
+        val blogItems: List<BlogItem> = blogItemMap.values.toList()
+        val pagedBlogItems = mutableMapOf<Int, List<BlogItem>>()
+
         for (pageNumber in 1..totalPagesCount) {
             var endIdx = pageNumber * ITEMS_PER_PAGE
             val startIdx = endIdx - ITEMS_PER_PAGE
@@ -159,8 +165,13 @@ class ServerVerticle : AbstractVerticle() {
             if (pageNumber == totalPagesCount && itemsOnLastPage != 0) {
                 endIdx = startIdx + itemsOnLastPage
             }
-            indexedEntries.put(pageNumber, Json.encode(blogItems.subList(startIdx, endIdx).asReversed()))
+            pagedBlogItems.put(pageNumber, blogItems.subList(startIdx, endIdx).sortedByDescending(BlogItem::id))
         }
+
+        //set class level variables which is read by REST services
+        highestPage = totalPagesCount.toString()
+        blogCount = blogItemCount.toString()
+        this.pagedBlogItems = pagedBlogItems
     }
 
     private fun createRouter() = Router.router(vertx).apply {
@@ -219,10 +230,6 @@ class ServerVerticle : AbstractVerticle() {
                 ctx.response().end(accessToken?.principal()?.encodePrettily())
             })
 
-            get("/protected/info").handler({ ctx ->
-                //TODO: Redirect to submit form or something here ...
-                ctx.response().end("Welcome to protected world!")
-            })
         }
     }
 
@@ -238,9 +245,9 @@ class ServerVerticle : AbstractVerticle() {
         val pageNumber = req.request().getParam("pageNumber").toIntOrNull() ?: 0
 
         if (pageNumber >= 1) {
-            val pagedBlogItemsList = indexedEntries[pageNumber]
+            val pagedBlogItemsList = pagedBlogItems[pageNumber]
             if (pagedBlogItemsList != null) {
-                req.response().sendJson(pagedBlogItemsList)
+                req.response().sendJson(Json.encode(pagedBlogItemsList))
             } else {
                 req.response().endWithError()
             }
