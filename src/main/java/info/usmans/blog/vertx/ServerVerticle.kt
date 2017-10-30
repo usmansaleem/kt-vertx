@@ -183,6 +183,8 @@ class ServerVerticle : AbstractVerticle() {
         get("/rest/blog/listCategories").handler(handlerListCategories)
         get("/rest/blog/blogCount").handler(handlerBlogCount)
         get("/rest/blog/blogItems/:pageNumber").handler(handlerMainBlogByPageNumber)
+        get("/rest/blog/blogItems").handler(handlerBlogItemsJson)
+        get("/rest/blog/blogItems/blogItem/:id").handler(handlerBlogItemById)
 
         secureRoutes()
 
@@ -256,6 +258,19 @@ class ServerVerticle : AbstractVerticle() {
         }
     }
 
+    private val handlerBlogItemsJson = Handler<RoutingContext> { req ->
+        req.response().sendJson(Json.encodePrettily(blogItemMap.values.toList().sortedByDescending { it.id }))
+    }
+
+    private val handlerBlogItemById = Handler<RoutingContext> { req ->
+        val blogItemId = req.request().getParam("id").toLongOrNull() ?: 0
+        if (blogItemMap.contains(blogItemId)) {
+            req.response().sendJson(Json.encodePrettily(blogItemMap.get(blogItemId)))
+        } else {
+            req.response().endWithInvalidIdError()
+        }
+    }
+
     /**
      * Extension to the HTTP response to output JSON objects.
      */
@@ -272,5 +287,9 @@ class ServerVerticle : AbstractVerticle() {
 
     private fun HttpServerResponse.endWithError() {
         this.setStatusCode(400).end("Bad Request - Invalid Page Number")
+    }
+
+    private fun HttpServerResponse.endWithInvalidIdError() {
+        this.setStatusCode(400).end("Bad Request - Invalid Id")
     }
 }
