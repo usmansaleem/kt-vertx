@@ -44,6 +44,8 @@ blogApp.directive('readmoreDirective', function() {
 blogApp.controller('mainCtrl', function($scope, $http, $log, $sce) {
     $scope.pageClass = 'page-home';
     $scope.maxSize = 5;
+    $scope.bigCurrentPage = 0;
+    $scope.lastPage = 0;
 
     $scope.trustBlogHtml = function(html) {
               return $sce.trustAsHtml(html);
@@ -91,8 +93,8 @@ blogApp.controller('mainCtrl', function($scope, $http, $log, $sce) {
 
     //function to show jumbotron
     $scope.showJumbotron = function() {
-        return $scope.lastPage === $scope.bigCurrentPage
-    }
+        return $scope.lastPage == $scope.bigCurrentPage
+    };
 
     //call initial methods
     $scope.getHighestPage();
