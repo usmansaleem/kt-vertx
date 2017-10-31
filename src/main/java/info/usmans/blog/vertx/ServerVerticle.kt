@@ -1,5 +1,7 @@
+
 package info.usmans.blog.vertx
 
+import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import info.usmans.blog.handler.Auth0AuthHandler
@@ -20,12 +22,32 @@ import io.vertx.ext.auth.oauth2.OAuth2ClientOptions
 import io.vertx.ext.auth.oauth2.OAuth2FlowType
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
+import io.vertx.ext.web.client.WebClient
+import io.vertx.ext.web.client.WebClientOptions
 import io.vertx.ext.web.handler.*
 import io.vertx.ext.web.sstore.LocalSessionStore
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.*
 
-const val ITEMS_PER_PAGE = 10
+internal const val ITEMS_PER_PAGE = 10
+internal const val DATA_JSON_URL = "https://gist.github.com/usmansaleem/9bb0e98d05caa0afcc649b6593733edf/raw"
+internal const val OAUTH_SITE = "https://uzi.au.auth0.com"
+internal const val OAUTH_TOKEN_PATH = "/oauth/token"
+internal const val OAUTH_AUTHZ_PATH = "/authorize"
+internal const val OAUTH_USERINFO_PATH = "/userinfo"
+
+/**
+ * Server Verticle - Launching Http and Https server on port 8080 and 8443.
+ *
+ * To launch secure server on port 8443, following environment variables are required
+ * BLOG_CERT_BASE64 - PEM Certificate further encoded in BASE64 with wrap 0
+ * BLOG_KEY_BASE64 - RSA Private Key (non-encryoted) further encoded in BASE64 with wrap 0
+ *
+ * To configure protected routes, following environment variables are required
+ * OAUTH_CLIENT_ID
+ * OAUTH_CLIENT_SECRET
+ *
+ */
 
 class ServerVerticle : AbstractVerticle() {
     init {
@@ -54,15 +76,40 @@ class ServerVerticle : AbstractVerticle() {
     private var blogCount: String = ""
 
     override fun start(startFuture: Future<Void>?) {
+        //read data.json
+        val options = WebClientOptions()
+        options.isKeepAlive = false
+        val client = WebClient.create(vertx, options)
+        println("Reading data.json from ${DATA_JSON_URL}")
+        client.getAbs(DATA_JSON_URL).send({ ar ->
+            if (ar.succeeded()) {
+                val body = ar.result().body()
+                val blogItemMap: Map<Long, BlogItem>? = try {
+                    initializeBlogItemMap(body)
+                } catch(e: JsonParseException) {
+                    startFuture?.fail(e)
+                    null
+                }
+
+                if(blogItemMap != null) {
+                    this.blogItemMap.putAll(blogItemMap)
+                    initPagedBlogItems()
+
+                    //construct router and http server
+                    val router = createRouter()
+
+                    createHttpServers(router, startFuture)
+                }
+            } else {
+                println("Reading Failed for ${DATA_JSON_URL}")
+                startFuture?.fail(ar.cause())
+            }
+        })
+    }
+
+    private fun createHttpServers(router: Router, startFuture: Future<Void>?) {
         val (keyValue, certValue) = Pair(getKeyValue(), getCertValue())
         val redirectSSLPort = System.getProperty("redirectSSLPort", "443").toIntOrNull() ?: 443
-
-        //load our blog from data.json
-        initData()
-
-        //construct router and http server
-        val router = createRouter()
-
         if (keyValue != null && certValue != null) {
             println("Deploying Http Server (SSL) on port 8443")
             //deploy this verticle with SSL
@@ -98,8 +145,6 @@ class ServerVerticle : AbstractVerticle() {
                 })
             }
         }
-
-
     }
 
     private fun getCertValue(): String? {
@@ -138,13 +183,10 @@ class ServerVerticle : AbstractVerticle() {
         }
     }
 
-    private fun initData() {
-        blogItemMap.putAll(initializeBlogItemMap())
-        initPagedBlogItems()
-    }
+    internal fun readLocalDataJson() = vertx.fileSystem().readFileBlocking("data.json")
 
-    internal fun initializeBlogItemMap(): Map<Long, BlogItem> {
-        val dataJson = vertx.fileSystem().readFileBlocking("data.json")
+    internal fun initializeBlogItemMap(dataJson: Buffer): Map<Long, BlogItem> {
+        //val dataJson = vertx.fileSystem().readFileBlocking("data.json")
         val blogItemsOrig: List<BlogItem> = Json.mapper.readValue(dataJson.toString())
         return blogItemsOrig.associateBy({ it.id }) { it }
     }
@@ -206,10 +248,10 @@ class ServerVerticle : AbstractVerticle() {
             val authProvider = OAuth2Auth.create(vertx, OAuth2FlowType.AUTH_CODE, OAuth2ClientOptions().apply {
                 clientID = oauthClientId
                 clientSecret = oauthClientSecret
-                site = "https://uzi.au.auth0.com"
-                tokenPath = "/oauth/token"
-                authorizationPath = "/authorize"
-                userInfoPath = "/userinfo"
+                site = OAUTH_SITE
+                tokenPath = OAUTH_TOKEN_PATH
+                authorizationPath = OAUTH_AUTHZ_PATH
+                userInfoPath = OAUTH_USERINFO_PATH
                 isJwtToken = false
             })
 
