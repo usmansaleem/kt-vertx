@@ -30,7 +30,7 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.util.*
 
 internal const val ITEMS_PER_PAGE = 10
-internal const val DATA_JSON_URL = "https://gist.github.com/usmansaleem/9bb0e98d05caa0afcc649b6593733edf/raw"
+internal const val DATA_JSON_URL = "https://gist.githubusercontent.com/usmansaleem/9bb0e98d05caa0afcc649b6593733edf/raw"
 internal const val OAUTH_SITE = "https://uzi.au.auth0.com"
 internal const val OAUTH_TOKEN_PATH = "/oauth/token"
 internal const val OAUTH_AUTHZ_PATH = "/authorize"
@@ -80,7 +80,7 @@ class ServerVerticle : AbstractVerticle() {
         val options = WebClientOptions()
         options.isKeepAlive = false
         val client = WebClient.create(vertx, options)
-        println("Reading data.json from ${DATA_JSON_URL}")
+        println("Reading data.json from $DATA_JSON_URL")
         client.getAbs(DATA_JSON_URL).send({ ar ->
             if (ar.succeeded()) {
                 val body = ar.result().body()
@@ -101,7 +101,7 @@ class ServerVerticle : AbstractVerticle() {
                     createHttpServers(router, startFuture)
                 }
             } else {
-                println("Reading Failed for ${DATA_JSON_URL}")
+                println("Reading Failed for $DATA_JSON_URL")
                 startFuture?.fail(ar.cause())
             }
         })
@@ -183,9 +183,7 @@ class ServerVerticle : AbstractVerticle() {
         }
     }
 
-    internal fun readLocalDataJson() = vertx.fileSystem().readFileBlocking("data.json")
-
-    internal fun initializeBlogItemMap(dataJson: Buffer): Map<Long, BlogItem> {
+    private fun initializeBlogItemMap(dataJson: Buffer): Map<Long, BlogItem> {
         //val dataJson = vertx.fileSystem().readFileBlocking("data.json")
         val blogItemsOrig: List<BlogItem> = Json.mapper.readValue(dataJson.toString())
         return blogItemsOrig.associateBy({ it.id }) { it }
@@ -274,6 +272,28 @@ class ServerVerticle : AbstractVerticle() {
                 ctx.response().end(accessToken?.principal()?.encodePrettily())
             })
 
+            get("/protected/refresh").handler({ctx ->
+                val options = WebClientOptions()
+                options.isKeepAlive = false
+                val client = WebClient.create(vertx, options)
+                client.getAbs(DATA_JSON_URL).send({ ar ->
+                    if (ar.succeeded()) {
+                        val body = ar.result().body()
+                        try {
+                            val tmpMap = initializeBlogItemMap(body)
+                            blogItemMap = TreeMap()
+                            blogItemMap.putAll(tmpMap)
+                            initPagedBlogItems()
+                            ctx.response().sendJson(Json.encodePrettily(blogItemMap.values.toList().sortedByDescending { it.id }))
+                        } catch(e: JsonParseException) {
+                            ctx.response().endWithError("Error parsing $DATA_JSON_URL")
+                        }
+                    } else {
+                        ctx.response().endWithError("Error loading $DATA_JSON_URL: " + ar.cause().message)
+                    }
+                })
+            })
+
         }
     }
 
@@ -293,10 +313,10 @@ class ServerVerticle : AbstractVerticle() {
             if (pagedBlogItemsList != null) {
                 req.response().sendJson(Json.encode(pagedBlogItemsList))
             } else {
-                req.response().endWithError()
+                req.response().endWithInvalidPageNumberError()
             }
         } else {
-            req.response().endWithError()
+            req.response().endWithInvalidPageNumberError()
         }
     }
 
@@ -307,7 +327,7 @@ class ServerVerticle : AbstractVerticle() {
     private val handlerBlogItemById = Handler<RoutingContext> { req ->
         val blogItemId = req.request().getParam("id").toLongOrNull() ?: 0
         if (blogItemMap.contains(blogItemId)) {
-            req.response().sendJson(Json.encodePrettily(blogItemMap.get(blogItemId)))
+            req.response().sendJson(Json.encodePrettily(blogItemMap[blogItemId]))
         } else {
             req.response().endWithInvalidIdError()
         }
@@ -327,11 +347,15 @@ class ServerVerticle : AbstractVerticle() {
         this.putHeader("Content-Type", "text/plain; charset=utf-8").end(plain)
     }
 
-    private fun HttpServerResponse.endWithError() {
-        this.setStatusCode(400).end("Bad Request - Invalid Page Number")
+    private fun HttpServerResponse.endWithInvalidPageNumberError() {
+        endWithError("Bad Request - Invalid Page Number")
     }
 
     private fun HttpServerResponse.endWithInvalidIdError() {
-        this.setStatusCode(400).end("Bad Request - Invalid Id")
+        endWithError("Bad Request - Invalid Id")
+    }
+
+    private fun HttpServerResponse.endWithError(msg: String) {
+        this.setStatusCode(400).end(msg)
     }
 }
