@@ -214,7 +214,7 @@ class ServerVerticle : AbstractVerticle() {
         get("/rest/blog/blogItems").handler(handlerBlogItemsJson)
         get("/rest/blog/blogItems/blogItem/:id").handler(handlerBlogItemById)
         get("/sitemap.txt").handler({ rc ->
-            rc.response().sendPlain("${blogItemMap.keys.joinToString("\n") { "${rc.request().getOAuthRedirectURI("/#!/blog/")}$it" }}")
+            rc.response().putHeader("Content-Type", "text; charset=utf-8").end("${blogItemMap.keys.joinToString("\n") { "${rc.request().getOAuthRedirectURI("/#!/blog/")}$it" }}")
         })
 
         secureRoutes()
