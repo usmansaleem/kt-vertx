@@ -25,6 +25,12 @@ blogApp.config(function($routeProvider) {
                 controller  : 'notesCtrl'
             })
 
+            //route for individual blog entry
+            .when('/blog/:blogId', {
+                templateUrl : 'pages/blog.html',
+                controller : 'blogCtrl'
+            })
+
             .otherwise({
                            redirectTo: '/'
                         });
@@ -94,4 +100,18 @@ blogApp.controller('aboutCtrl', function($scope) {
 // create the controller and inject Angular's $scope
 blogApp.controller('notesCtrl', function($scope) {
     $scope.pageClass = 'page-notes';
+});
+
+blogApp.controller('blogCtrl', function($scope, $http, $log, $sce, $routeParams) {
+    $scope.pageClass = 'page-blog';
+
+    $scope.trustBlogHtml = function(html) {
+        return $sce.trustAsHtml(html);
+    };
+
+    $http.get('/rest/blog/blogItems/blogItem/' + $routeParams.blogId).then(function(response) {
+        $scope.blogItem = response.data;
+        window.scrollTo(0,0);
+    });
+
 });

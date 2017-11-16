@@ -1,0 +1,25 @@
+<div class="container">
+    <br />
+    <section>
+        <div class="media">
+            <div class="media-left">
+                <div class="date">
+                    <span class="day">{{blogItem.createDay}}</span>
+                    <span class="month">{{blogItem.createMonth}}</span>
+                    <span class="year">{{blogItem.createYear}}</span>
+                </div>
+            </div>
+            <div class="media-body">
+                <h3 class="media-heading">{{blogItem.title}}</h3>
+                <span ng-repeat="blogCat in blogItem.categories">
+                      <span class="label label-default">{{blogCat.name}}</span>
+                    </span>
+                <hr/>
+                <article class="blog-body" id="blogID_{{blogItem.id}}">
+                    <div ng-bind-html="blogItem.body"></div>
+                </article>
+                <br><br>
+            </div>
+        </div>
+    </section>
+</div>
