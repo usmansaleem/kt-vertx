@@ -254,10 +254,10 @@ class ServerVerticle : AbstractVerticle() {
             )
 
             get("/protected").handler({ ctx ->
-                //TODO: Redirect to submit form or something here ...
                 val accessToken: AccessToken? = ctx.user() as AccessToken
                 //for now simply dump the access token
-                ctx.response().end(accessToken?.principal()?.encodePrettily())
+                val htmlBody = "<html><body><p>${accessToken?.principal()?.encodePrettily()}</p><p><a href=\"/protected/refresh\">Refresh Data</a></p></body></html>"
+                ctx.response().putHeader("Content-Type", "text/html").end(htmlBody)
             })
 
             get("/protected/refresh").handler({ctx ->
