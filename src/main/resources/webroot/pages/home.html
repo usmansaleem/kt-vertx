@@ -16,7 +16,7 @@
 
 <div class="container">
 <!-- Blog -->
-        <section ng-repeat="blogItem in blogItems" readmore-directive>
+        <section ng-repeat="blogItem in blogItems" readmore-directive gist-directive>
             <div class="media">
                 <div class="media-left">
                     <div class="date">
@@ -32,7 +32,7 @@
                     </span>
                     <hr />
                     <article class="blog-body" id="blogID_{{blogItem.id}}">
-                      <div ng-bind-html="blogItem.body"></div>
+                      <div ng-bind-html=trustBlogHtml(blogItem.body)></div>
                     </article>
                     <br><br>
                 </div>

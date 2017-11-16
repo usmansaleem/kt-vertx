@@ -1,7 +1,7 @@
 // script.js
 
 // create the module and name it blogApp
-var blogApp = angular.module('blogApp', ['ngRoute','ngAnimate','ui.bootstrap','ngSanitize']);
+var blogApp = angular.module('blogApp', ['ngRoute','ngAnimate','ui.bootstrap', 'ngSanitize']);
 
 //ng-routes
 blogApp.config(function($routeProvider) {
@@ -42,6 +42,15 @@ blogApp.directive('readmoreDirective', function() {
 	scope.$watch('blogItem', function(){
 		angular.element('article').readmore();
 	});	
+
+    }
+});
+
+blogApp.directive('gistDirective', function() {
+    return function(scope, element, attrs) {
+        scope.$watch('blogItem', function(){
+            angular.element('[data-gist-id]').gist();
+        });
 
     }
 });

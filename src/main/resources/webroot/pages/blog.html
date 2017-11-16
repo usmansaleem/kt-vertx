@@ -1,6 +1,6 @@
 <div class="container">
     <br />
-    <section>
+    <section gist-directive>
         <div class="media">
             <div class="media-left">
                 <div class="date">
@@ -16,7 +16,7 @@
                     </span>
                 <hr/>
                 <article class="blog-body" id="blogID_{{blogItem.id}}">
-                    <div ng-bind-html="blogItem.body"></div>
+                    <div ng-bind-html="trustBlogHtml(blogItem.body)"></div>
                 </article>
                 <br><br>
             </div>
