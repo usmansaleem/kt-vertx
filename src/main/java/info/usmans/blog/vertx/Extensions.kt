@@ -1,7 +1,6 @@
 package info.usmans.blog.vertx
 
 import io.vertx.core.http.HttpServerRequest
-import io.vertx.ext.web.Route
 import java.net.URI
 
 fun HttpServerRequest.redirectToSecure(publicHttpsPort: Int = 443, redirectCode: Int = 302) {

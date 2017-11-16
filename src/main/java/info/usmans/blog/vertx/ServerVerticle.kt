@@ -6,7 +6,6 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import info.usmans.blog.handler.Auth0AuthHandler
 import info.usmans.blog.model.BlogItem
-import info.usmans.blog.model.Category
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Future
 import io.vertx.core.Handler
@@ -59,15 +58,6 @@ class ServerVerticle : AbstractVerticle() {
             registerKotlinModule()
         }
     }
-
-    private val defaultCategories = Json.encode(listOf(
-            Category(1, "Java"),
-            Category(2, "PostgreSQL"),
-            Category(3, "Linux"),
-            Category(4, "IT"),
-            Category(5, "General"),
-            Category(6, "JBoss")
-    ))
 
     private var pagedBlogItems: Map<Int, List<BlogItem>> = mapOf()
     private var blogItemMap = TreeMap<Long, BlogItem>()
@@ -184,7 +174,6 @@ class ServerVerticle : AbstractVerticle() {
     }
 
     private fun initializeBlogItemMap(dataJson: Buffer): Map<Long, BlogItem> {
-        //val dataJson = vertx.fileSystem().readFileBlocking("data.json")
         val blogItemsOrig: List<BlogItem> = Json.mapper.readValue(dataJson.toString())
         return blogItemsOrig.associateBy({ it.id }) { it }
     }
@@ -220,7 +209,6 @@ class ServerVerticle : AbstractVerticle() {
         //our standard routes
         route().handler(FaviconHandler.create()) //serve favicon.ico from classpath
         get("/rest/blog/highestPage").handler(handlerHighestPage)
-        get("/rest/blog/listCategories").handler(handlerListCategories)
         get("/rest/blog/blogCount").handler(handlerBlogCount)
         get("/rest/blog/blogItems/:pageNumber").handler(handlerMainBlogByPageNumber)
         get("/rest/blog/blogItems").handler(handlerBlogItemsJson)
@@ -295,10 +283,6 @@ class ServerVerticle : AbstractVerticle() {
             })
 
         }
-    }
-
-    private val handlerListCategories = Handler<RoutingContext> { req ->
-        req.response().sendJson(defaultCategories)
     }
 
     private val handlerBlogCount = Handler<RoutingContext> { req -> req.response().sendPlain(blogCount) }

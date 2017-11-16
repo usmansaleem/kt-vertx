@@ -51,21 +51,6 @@ blogApp.controller('mainCtrl', function($scope, $http, $log, $sce) {
               return $sce.trustAsHtml(html);
             };
 
-    //categories
-    $http({
-      method: 'GET',
-      url: 'rest/blog/listCategories'
-    }).then(function successCallback(response) {
-        // this callback will be called asynchronously
-        // when the response is available
-        $scope.categories = response;
-      }, function errorCallback(response) {
-        // called asynchronously if an error occurs
-        // or server returns response with an error status.
-        $scope.errorResponse = response;
-      });
-
-
     //when page changes, fetch new data
     $scope.pageChanged = function() {
         $http.get('rest/blog/blogItems/' + $scope.bigCurrentPage).then(function(response) {
