@@ -29,7 +29,7 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.util.*
 
 internal const val ITEMS_PER_PAGE = 10
-internal const val DATA_JSON_URL = "https://gist.githubusercontent.com/usmansaleem/9bb0e98d05caa0afcc649b6593733edf/raw"
+internal const val DATA_JSON_GIST_TAG = "5b40796dfe53e916486b23afb29f8bcf68ff0f87" //calculated from https://rawgit.com
 internal const val OAUTH_SITE = "https://uzi.au.auth0.com"
 internal const val OAUTH_TOKEN_PATH = "/oauth/token"
 internal const val OAUTH_AUTHZ_PATH = "/authorize"
@@ -65,13 +65,18 @@ class ServerVerticle : AbstractVerticle() {
     private var highestPage: String = ""
     private var blogCount: String = ""
 
+    private fun dataJsonUrl(tag: String = DATA_JSON_GIST_TAG): String {
+        return "https://cdn.rawgit.com/usmansaleem/9bb0e98d05caa0afcc649b6593733edf/raw/$tag/data.json"
+    }
+
     override fun start(startFuture: Future<Void>?) {
         //read data.json
+        val jsonUrl = dataJsonUrl()
         val options = WebClientOptions()
         options.isKeepAlive = false
         val client = WebClient.create(vertx, options)
-        println("Reading data.json from $DATA_JSON_URL")
-        client.getAbs(DATA_JSON_URL).send({ ar ->
+        println("Reading data.json from $jsonUrl")
+        client.getAbs(jsonUrl).send({ ar ->
             if (ar.succeeded()) {
                 val body = ar.result().body()
                 val blogItemMap: Map<Long, BlogItem>? = try {
@@ -91,7 +96,7 @@ class ServerVerticle : AbstractVerticle() {
                     createHttpServers(router, startFuture)
                 }
             } else {
-                println("Reading Failed for $DATA_JSON_URL")
+                println("Reading Failed for $jsonUrl")
                 startFuture?.fail(ar.cause())
             }
         })
@@ -214,7 +219,8 @@ class ServerVerticle : AbstractVerticle() {
         get("/rest/blog/blogItems").handler(handlerBlogItemsJson)
         get("/rest/blog/blogItems/blogItem/:id").handler(handlerBlogItemById)
         get("/sitemap.txt").handler({ rc ->
-            rc.response().putHeader("Content-Type", "text; charset=utf-8").end("${blogItemMap.keys.joinToString("\n") { "${rc.request().getOAuthRedirectURI("/#!/blog/")}$it" }}")
+            rc.response().putHeader("Content-Type", "text; charset=utf-8").end(blogItemMap.keys.joinToString("\n") { "${rc.request().
+                    getOAuthRedirectURI("/#!/blog/")}$it" })
         })
 
         secureRoutes()
@@ -259,15 +265,17 @@ class ServerVerticle : AbstractVerticle() {
             get("/protected").handler({ ctx ->
                 val accessToken: AccessToken? = ctx.user() as AccessToken
                 //for now simply dump the access token
-                val htmlBody = "<html><body><p>${accessToken?.principal()?.encodePrettily()}</p><p><a href=\"/protected/refresh\">Refresh Data</a></p></body></html>"
+                val htmlBody = "<html><body><p>${accessToken?.principal()?.encodePrettily()}</p><p>Refresh Data by calling /protected/refresh/tag from rawgit.com</p></body></html>"
                 ctx.response().putHeader("Content-Type", "text/html").end(htmlBody)
             })
 
-            get("/protected/refresh").handler({ctx ->
+            get("/protected/refresh/:tag").handler({rc ->
+               val jsonUrl = dataJsonUrl(rc.request().getParam("tag") ?: DATA_JSON_GIST_TAG)
+
                 val options = WebClientOptions()
                 options.isKeepAlive = false
                 val client = WebClient.create(vertx, options)
-                client.getAbs(DATA_JSON_URL).send({ ar ->
+                client.getAbs(jsonUrl).send({ ar ->
                     if (ar.succeeded()) {
                         val body = ar.result().body()
                         try {
@@ -275,12 +283,12 @@ class ServerVerticle : AbstractVerticle() {
                             blogItemMap = TreeMap()
                             blogItemMap.putAll(tmpMap)
                             initPagedBlogItems()
-                            ctx.response().sendJson(Json.encodePrettily(blogItemMap.values.toList().sortedByDescending { it.id }))
+                            rc.response().sendJson(Json.encodePrettily(blogItemMap.values.toList().sortedByDescending { it.id }))
                         } catch(e: JsonParseException) {
-                            ctx.response().endWithError("Error parsing $DATA_JSON_URL")
+                            rc.response().endWithError("Error parsing $jsonUrl")
                         }
                     } else {
-                        ctx.response().endWithError("Error loading $DATA_JSON_URL: " + ar.cause().message)
+                        rc.response().endWithError("Error loading $jsonUrl: " + ar.cause().message)
                     }
                 })
             })
