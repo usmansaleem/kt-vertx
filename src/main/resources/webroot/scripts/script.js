@@ -1,7 +1,7 @@
 // script.js
 
 // create the module and name it blogApp
-var blogApp = angular.module('blogApp', ['ngRoute','ngAnimate','ui.bootstrap', 'ngSanitize', 'ezfb']);
+var blogApp = angular.module('blogApp', ['ngRoute','ngAnimate','ui.bootstrap', 'ngSanitize', 'viewhead', 'ezfb']);
 
 //ng-routes
 blogApp.config(function($routeProvider) {

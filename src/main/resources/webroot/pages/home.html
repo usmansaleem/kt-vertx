@@ -1,3 +1,9 @@
+<view-title>Usman Saleem - Blog - Page {{bigCurrentPage}}</view-title>
+<meta view-head property="og:url"           content="{{$location.absUrl()}}" />
+<meta view-head property="og:type"          content="website" />
+<meta view-head property="og:title"         content="Page {{bigCurrentPage}} - Usman Saleem - Blog" />
+<meta view-head property="og:description"   content="Things I learn, observe and tryout." />
+<meta view-head property="og:image"         content="https://usmans.info/uicon.png" />
 <div class="jumbotron" ng-show="showJumbotron()">
     <div class="container">
         <h1>Usman Saleem</h1>
@@ -35,12 +41,6 @@
                       <div ng-bind-html=trustBlogHtml(blogItem.body)></div>
                     </article>
                     <br><br>
-                </div>
-                <div class="media-right">
-                    <div class="fb-like"
-                         data-href="{{$location.absUrl()}}blog/{{blogItem.id}}"
-                         data-layout="button" data-action="like" data-size="small" data-show-faces="false" data-share="true">
-                    </div>
                 </div>
             </div>
         </section>
