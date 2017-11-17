@@ -1,5 +1,5 @@
 <div class="container">
-    <br />
+    <br/>
     <section gist-directive>
         <div class="media">
             <div class="media-left">
@@ -13,13 +13,20 @@
                 <h3 class="media-heading">{{blogItem.title}}</h3>
                 <span ng-repeat="blogCat in blogItem.categories">
                       <span class="label label-default">{{blogCat.name}}</span>
-                    </span>
+                </span>
                 <hr/>
                 <article class="blog-body" id="blogID_{{blogItem.id}}">
                     <div ng-bind-html="trustBlogHtml(blogItem.body)"></div>
                 </article>
                 <br><br>
             </div>
+            <div class="media-right">
+                <div class="fb-like"
+                     data-href="{{$location.absUrl()}}"
+                     data-layout="button" data-action="like" data-size="small" data-show-faces="false" data-share="true">
+                </div>
+            </div>
         </div>
     </section>
+    <div class="fb-comments" data-href="{{$location.absUrl()}}" data-numposts="5" data-colorscheme="light"></div>
 </div>

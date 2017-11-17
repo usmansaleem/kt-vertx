@@ -1,7 +1,7 @@
 // script.js
 
 // create the module and name it blogApp
-var blogApp = angular.module('blogApp', ['ngRoute','ngAnimate','ui.bootstrap', 'ngSanitize']);
+var blogApp = angular.module('blogApp', ['ngRoute','ngAnimate','ui.bootstrap', 'ngSanitize', 'ezfb']);
 
 //ng-routes
 blogApp.config(function($routeProvider) {
@@ -37,6 +37,14 @@ blogApp.config(function($routeProvider) {
 
     });
 
+//FB Integration
+blogApp.config(function (ezfbProvider) {
+    ezfbProvider.setInitParams({
+        //developer fb app id
+        appId: '142645833160332'
+    });
+});
+
 blogApp.directive('readmoreDirective', function() {
     return function(scope, element, attrs) {
 	scope.$watch('blogItem', function(){
@@ -54,6 +62,8 @@ blogApp.directive('gistDirective', function() {
 
     }
 });
+
+
 
 // create the controller and inject Angular's $scope
 blogApp.controller('mainCtrl', function($scope, $http, $log, $sce) {
