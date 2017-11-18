@@ -1,4 +1,3 @@
-
 package info.usmans.blog.vertx
 
 import com.fasterxml.jackson.core.JsonParseException
@@ -10,6 +9,7 @@ import io.vertx.core.AbstractVerticle
 import io.vertx.core.Future
 import io.vertx.core.Handler
 import io.vertx.core.buffer.Buffer
+import io.vertx.core.http.HttpHeaders
 import io.vertx.core.http.HttpServerOptions
 import io.vertx.core.http.HttpServerResponse
 import io.vertx.core.json.Json
@@ -25,6 +25,7 @@ import io.vertx.ext.web.client.WebClient
 import io.vertx.ext.web.client.WebClientOptions
 import io.vertx.ext.web.handler.*
 import io.vertx.ext.web.sstore.LocalSessionStore
+import io.vertx.ext.web.templ.HandlebarsTemplateEngine
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.*
 
@@ -59,6 +60,9 @@ class ServerVerticle : AbstractVerticle() {
         }
     }
 
+    //private val templateEngine = HandlebarsTemplateEngine.create()
+    // private val templateHandler = TemplateHandler.create(templateEngine)
+
     private var pagedBlogItems: Map<Int, List<BlogItem>> = mapOf()
     private var blogItemMap = TreeMap<Long, BlogItem>()
 
@@ -81,12 +85,12 @@ class ServerVerticle : AbstractVerticle() {
                 val body = ar.result().body()
                 val blogItemMap: Map<Long, BlogItem>? = try {
                     initializeBlogItemMap(body)
-                } catch(e: JsonParseException) {
+                } catch (e: JsonParseException) {
                     startFuture?.fail(e)
                     null
                 }
 
-                if(blogItemMap != null) {
+                if (blogItemMap != null) {
                     this.blogItemMap.putAll(blogItemMap)
                     initPagedBlogItems()
 
@@ -219,9 +223,34 @@ class ServerVerticle : AbstractVerticle() {
         get("/rest/blog/blogItems").handler(handlerBlogItemsJson)
         get("/rest/blog/blogItems/blogItem/:id").handler(handlerBlogItemById)
         get("/sitemap.txt").handler({ rc ->
-            rc.response().putHeader("Content-Type", "text; charset=utf-8").end(blogItemMap.keys.joinToString("\n") { "${rc.request().
-                    getOAuthRedirectURI("/#!/blog/")}$it" })
+            rc.response().putHeader("Content-Type", "text; charset=utf-8").end(blogItemMap.keys.joinToString("\n") {
+                "${rc.request().getOAuthRedirectURI("/blog/")}$it"
+            })
         })
+
+        val templateEngine = HandlebarsTemplateEngine.create()
+
+        //handle individual blog entry ...
+        get("/blog/:id").handler({ rc ->
+            val blogItemId = rc.request().getParam("id").toLongOrNull() ?: 0
+            if (blogItemMap.containsKey(blogItemId)) {
+                //pass blogItem to the template
+                rc.put("blogItem", blogItemMap.get(blogItemId))
+                templateEngine.render(rc, "templates/blog.hbs", { res ->
+                    if (res.succeeded()) {
+                        rc.response().putHeader(HttpHeaders.CONTENT_TYPE, "text/html").end(res.result())
+                    } else {
+                        rc.fail(res.cause())
+                    }
+                })
+
+            } else {
+                rc.response().endWithError("Invalid Blog")
+            }
+        })
+
+
+
 
         secureRoutes()
 
@@ -269,8 +298,8 @@ class ServerVerticle : AbstractVerticle() {
                 ctx.response().putHeader("Content-Type", "text/html").end(htmlBody)
             })
 
-            get("/protected/refresh/:tag").handler({rc ->
-               val jsonUrl = dataJsonUrl(rc.request().getParam("tag") ?: DATA_JSON_GIST_TAG)
+            get("/protected/refresh/:tag").handler({ rc ->
+                val jsonUrl = dataJsonUrl(rc.request().getParam("tag") ?: DATA_JSON_GIST_TAG)
 
                 val options = WebClientOptions()
                 options.isKeepAlive = false
@@ -284,7 +313,7 @@ class ServerVerticle : AbstractVerticle() {
                             blogItemMap.putAll(tmpMap)
                             initPagedBlogItems()
                             rc.response().sendJson(Json.encodePrettily(blogItemMap.values.toList().sortedByDescending { it.id }))
-                        } catch(e: JsonParseException) {
+                        } catch (e: JsonParseException) {
                             rc.response().endWithError("Error parsing $jsonUrl")
                         }
                     } else {
