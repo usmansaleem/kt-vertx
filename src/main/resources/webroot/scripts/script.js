@@ -37,14 +37,6 @@ blogApp.config(function($routeProvider) {
 
     });
 
-//FB Integration
-blogApp.config(function (ezfbProvider) {
-    ezfbProvider.setInitParams({
-        //developer fb app id
-        appId: '142645833160332'
-    });
-});
-
 blogApp.directive('readmoreDirective', function() {
     return function(scope, element, attrs) {
 	scope.$watch('blogItem', function(){
