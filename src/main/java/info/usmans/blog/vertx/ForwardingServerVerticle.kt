@@ -13,10 +13,8 @@ class ForwardingServerVerticle(val redirectSSLPort: Int = 443) : AbstractVerticl
             })
             listen(8080, {handler ->
                 if(handler.succeeded()) {
-                    println("Http Server on port 8080 deployed")
                     startFuture?.complete()
                 } else {
-                    println("Http Server on port 8080 failed to deploy")
                     startFuture?.fail(handler.cause())
                 }
             })

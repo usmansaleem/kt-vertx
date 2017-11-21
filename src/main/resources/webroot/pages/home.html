@@ -1,52 +1,39 @@
 <view-title>Usman Saleem - Blog - Page {{bigCurrentPage}}</view-title>
-<meta view-head property="og:url"           content="{{$location.absUrl()}}" />
-<meta view-head property="og:type"          content="website" />
-<meta view-head property="og:title"         content="Page {{bigCurrentPage}} - Usman Saleem - Blog" />
-<meta view-head property="og:description"   content="Things I learn, observe and tryout." />
-<meta view-head property="og:image"         content="https://usmans.info/uicon.png" />
+<meta view-head property="og:url" content="{{$location.absUrl()}}"/>
+<meta view-head property="og:type" content="website"/>
+<meta view-head property="og:title" content="Page {{bigCurrentPage}} - Usman Saleem - Blog"/>
+<meta view-head property="og:description" content="Things I learn, observe and tryout."/>
+<meta view-head property="og:image" content="https://usmans.info/images/usman_fb.jpg"/>
 <div class="jumbotron" ng-show="showJumbotron()">
     <div class="container">
         <h1>Usman Saleem</h1>
-        <p>Things I learn, observe and tryout...</p>
+        <p>An IT professional specialising in enterprise development (Java, Kotlin, JEE, Spring), DevOps/containerization/docker
+            with bits of Angular and the likes. Blogging about things I learn, observe and tryout ...
+        </p>
     </div>
-</div>
-<div class="container">
-    <div class="page-header">
-	<h1>Ramblings...</h1>
-    </div>
-</div>
-
-<div class="alert alert-danger" ng-show="errorResponse">
-    <strong>JSON Error: </strong>{{errorResponse}}
 </div>
 
 <div class="container">
-<!-- Blog -->
-        <section ng-repeat="blogItem in blogItems" readmore-directive gist-directive>
-            <div class="media">
-                <div class="media-left">
-                    <div class="date">
-                        <span class="day">{{blogItem.createDay}}</span>
-                        <span class="month">{{blogItem.createMonth}}</span>
-                        <span class="year">{{blogItem.createYear}}</span>
-                    </div>
-                </div>
-                <div class="media-body">
-                    <h3 class="media-heading"><a href="/blog/{{blogItem.id}}">{{blogItem.title}}</a></h3>
-                    <span ng-repeat="blogCat in blogItem.categories">
-                      <span class="label label-default">{{blogCat.name}}</span>
-                    </span>
-                    <hr />
-                    <article class="blog-body" id="blogID_{{blogItem.id}}">
-                      <div ng-bind-html=trustBlogHtml(blogItem.body)></div>
-                    </article>
-                    <br><br>
-                </div>
+    <div class="page-header">
+        <h1>Latest Articles ...</h1>
+    </div>
+    <!-- Blog -->
+    <section ng-repeat="blogItem in blogItems">
+        <div class="media">
+            <div class="media-body">
+                <h3 class="media-heading"><a href="/blog/{{blogItem.id}}">{{blogItem.title}}</a></h3>
+                <article class="blog-body" id="blogID_{{blogItem.id}}">
+                    <div ng-bind-html=blogItem.description></div>
+                </article>
             </div>
-        </section>
-
-        <div class="text-center">
-            <ul uib-pagination total-items="bigTotalItems" ng-model="bigCurrentPage" max-size="maxSize" num-pages="numPages" class="pagination-sm" boundary-link-numbers="true" rotate="false" previous-text="&lsaquo;" next-text="&rsaquo;" ng-change="pageChanged()"></ul>
+            <hr/>
         </div>
+    </section>
+
+    <div class="text-center">
+        <ul uib-pagination total-items="bigTotalItems" ng-model="bigCurrentPage" max-size="maxSize" num-pages="numPages"
+            class="pagination-sm" boundary-link-numbers="true" rotate="false" previous-text="&lsaquo;"
+            next-text="&rsaquo;" ng-change="pageChanged()"></ul>
+    </div>
 </div>
 

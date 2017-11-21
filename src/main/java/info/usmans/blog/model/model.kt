@@ -1,13 +1,19 @@
 package info.usmans.blog.model
 
+import java.util.*
+
+internal const val BLOG_ITEMS_PER_PAGE = 10
+
 /**
  * BlogItem represents each blog entry.
  */
 data class BlogItem(
         val id: Long = 0,
+        val urlFriendlyId: String? = "",
         val title: String,
+        val description: String? = "",
         val body: String? = "",
-        val blogSection: String? = "Main",
+        var blogSection: String? = "Main",
         val createdOn: String? = "",
         val modifiedOn: String? ="",
         val createDay: String? = "",
@@ -16,10 +22,56 @@ data class BlogItem(
         val categories: List<Category>? = emptyList()
 )
 
+
 /**
  * Represents a category*
  */
 data class Category(val id: Int = 0, val name: String = "")
 
+data class Message(val message: String = "")
 
+
+fun initPagedBlogItems(blogItems: List<BlogItem>): Map<Int, List<BlogItem>> {
+    val blogItemCount = blogItems.size
+    val itemsOnLastPage = blogItemCount % BLOG_ITEMS_PER_PAGE
+    val totalPagesCount = if (itemsOnLastPage == 0) blogItemCount / BLOG_ITEMS_PER_PAGE else blogItemCount / BLOG_ITEMS_PER_PAGE + 1
+
+    val pagedBlogItems = mutableMapOf<Int, List<BlogItem>>()
+
+    for (pageNumber in totalPagesCount downTo 1) {
+        var endIdx = (pageNumber * BLOG_ITEMS_PER_PAGE)
+        val startIdx = endIdx - BLOG_ITEMS_PER_PAGE
+
+        if ((pageNumber == totalPagesCount) && (itemsOnLastPage != 0)) {
+            endIdx = startIdx + itemsOnLastPage
+        }
+        val pagedList = blogItems.subList(startIdx, endIdx) //sort??
+        pagedBlogItems.put(pageNumber, pagedList)
+    }
+
+    return pagedBlogItems
+}
+
+class BlogItemMaps {
+
+    //store blog entries per page
+    private val pagedBlogItems: TreeMap<Int, List<BlogItem>> = TreeMap()
+    //store blog entries based on id
+    private val blogItemMap: TreeMap<Long, BlogItem> = TreeMap(Collections.reverseOrder())
+
+    fun initBlogItemMaps(blogItems: List<BlogItem>) {
+        this.blogItemMap.clear()
+        this.blogItemMap.putAll(blogItems.associateBy({ it.id }) { it })
+        this.pagedBlogItems.clear()
+        this.pagedBlogItems.putAll(initPagedBlogItems(blogItemMap.values.toList().sortedByDescending(BlogItem::id)))
+    }
+
+    fun getblogItemMap() = blogItemMap
+
+    fun getPagedblogItemMap() = pagedBlogItems
+
+    fun getHighestPage() = pagedBlogItems.lastKey()
+
+    fun getBlogCount() = blogItemMap.size
+}
 

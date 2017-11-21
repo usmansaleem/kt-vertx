@@ -19,12 +19,6 @@ blogApp.config(function($routeProvider) {
                 controller  : 'aboutCtrl'
             })
 
-            // route for the notes page
-            .when('/notes', {
-                templateUrl : 'pages/notes.html',
-                controller  : 'notesCtrl'
-            })
-
             .otherwise({
                            redirectTo: '/'
                         });
@@ -53,11 +47,6 @@ blogApp.directive('gistDirective', function() {
 
 // create the controller and inject Angular's $scope
 blogApp.controller('mainCtrl', function($scope, $http, $log, $sce) {
-    $scope.pageClass = 'page-home';
-    $scope.maxSize = 5;
-    $scope.bigCurrentPage = 0;
-    $scope.lastPage = 0;
-
     $scope.trustBlogHtml = function(html) {
               return $sce.trustAsHtml(html);
             };
@@ -81,18 +70,22 @@ blogApp.controller('mainCtrl', function($scope, $http, $log, $sce) {
     //function to get highestPage
     $scope.getHighestPage = function() {
         $http.get('rest/blog/highestPage').then(function(response) {
-            $scope.bigCurrentPage =  response.data;
-            $scope.lastPage = $scope.bigCurrentPage;
+            $scope.lastPage =  response.data;
             $scope.getBlogCount()
         });
     };
 
     //function to show jumbotron
     $scope.showJumbotron = function() {
-        return $scope.lastPage == $scope.bigCurrentPage
+        return $scope.bigCurrentPage == 1
     };
 
-    //call initial methods
+    $scope.pageClass = 'page-home';
+    $scope.maxSize = 5;
+    $scope.bigCurrentPage = 1;
+    $scope.lastPage = 1;
+
+    //call method chain ...
     $scope.getHighestPage();
     
 });
@@ -100,9 +93,4 @@ blogApp.controller('mainCtrl', function($scope, $http, $log, $sce) {
 // create the controller and inject Angular's $scope
 blogApp.controller('aboutCtrl', function($scope) {
     $scope.pageClass = 'page-about';
-});
-
-// create the controller and inject Angular's $scope
-blogApp.controller('notesCtrl', function($scope) {
-    $scope.pageClass = 'page-notes';
 });

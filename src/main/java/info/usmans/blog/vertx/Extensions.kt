@@ -1,6 +1,8 @@
 package info.usmans.blog.vertx
 
 import io.vertx.core.http.HttpServerRequest
+import io.vertx.core.http.HttpServerResponse
+import io.vertx.core.json.Json
 import java.net.URI
 
 fun HttpServerRequest.redirectToSecure(publicHttpsPort: Int = 443, redirectCode: Int = 302) {
@@ -21,4 +23,22 @@ fun HttpServerRequest.redirectToSecure(publicHttpsPort: Int = 443, redirectCode:
 fun HttpServerRequest.getOAuthRedirectURI(path: String): String {
     val redirectURI = URI(absoluteURI() ?: "https://usmans.info")
     return "https://" + redirectURI.authority + path
+}
+
+/**
+ * Extension to the HTTP response to output JSON objects.
+ */
+fun HttpServerResponse.sendJson(json: String) {
+    this.putHeader("Content-Type", "application/json; charset=utf-8").end(json)
+}
+
+/**
+ * Extension to the HTTP response to output plain text.
+ */
+fun HttpServerResponse.sendPlain(plain: String) {
+    this.putHeader("Content-Type", "text/plain; charset=utf-8").end(plain)
+}
+
+fun HttpServerResponse.endWithErrorJson(msg: String) {
+    this.setStatusCode(400).sendJson(Json.encode(msg))
 }

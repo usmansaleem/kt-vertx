@@ -22,3 +22,13 @@ Custom menu generated from http://bootstrap3-menu.codedorigin.com/
 .navbar-inverse .navbar-nav>.dropdown>a .caret { border-bottom-color: #999999}
 .navbar-inverse .navbar-nav>.dropdown>a:hover .caret { border-bottom-color: #FFFFFF}
 
+.navbar-brand-name > {
+    display: inline-block;
+    float: left;
+}
+
+.navbar-brand-name > img {
+    display: inline-block;
+    float: left;
+    margin: -5px 10px;
+}

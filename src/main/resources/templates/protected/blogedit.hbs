@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
 
-    <title>{{blogItem.title}}</title>
+    <title>Editing {{blogItem.id}}</title>
 
     <!-- font awsome -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css">
@@ -44,72 +44,12 @@
     <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
     <![endif]-->
 
-    <!-- Open Graph tags -->
-    <meta property="og:url"           content="https://usmans.info/blog/{{blogItem.id}}" />
-    <meta property="og:type"          content="article" />
-    <meta property="og:title"         content="{{blogItem.title}}" />
-    <meta property="og:description"   content="{{blogItem.title}}" />
-    <meta property="og:image"         content="https://usmans.info/images/usman_fb.jpg" />
-    <meta property="fb:app_id"        content="142645833160332" />
-
 </head>
 <body>
-<script>
-    window.fbAsyncInit = function () {
-        FB.init({
-            appId: '142645833160332',
-            xfbml: true,
-            version: 'v2.11'
-        });
-        FB.AppEvents.logPageView();
-    };
-
-    (function (d, s, id) {
-        var js, fjs = d.getElementsByTagName(s)[0];
-        if (d.getElementById(id)) {
-            return;
-        }
-        js = d.createElement(s);
-        js.id = id;
-        js.src = "https://connect.facebook.net/en_US/sdk.js";
-        fjs.parentNode.insertBefore(js, fjs);
-    }(document, 'script', 'facebook-jssdk'));
-</script>
-
-<nav class="navbar navbar-inverse navbar-fixed-top bs-docs-nav">
-    <div class="container-fluid">
-        <div class="navbar-header">
-            <button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".bs-navbar-collapse">
-                <span class="sr-only">Toggle navigation</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-            </button>
-                        <a class="navbar-brand" href="/#!/">
-                            <div class="navbar-brand-name">
-                                <img style="width:32px;height:32px;" src="/images/usman_fb.jpg" alt="Usman"/> Usman's Blog
-                            </div>
-                        </a>
-        </div>
-
-        <nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">
-            <ul class="nav navbar-nav">
-                <li>
-                    <a href="/#!/"><i class="fa fa-home"></i> Home</a>
-                </li>
-                <li>
-                    <a href="/#!/notes"><i class="fa fa-book"></i> Notes</a>
-                </li>
-                <li>
-                    <a href="/#!/about"><i class="fa fa-user"></i> About</a>
-                </li>
-            </ul>
-        </nav>
-    </div><!-- /.container-fluid -->
-</nav>
 
 <div>
     <div class="container">
+        <h1>Edit</h1>
         <br/>
         <section>
             <div class="media">
@@ -131,20 +71,9 @@
                     </article>
                     <br><br>
                 </div>
-                <div class="media-right">
-                    <div class="fb-like"
-                         data-href="https://usmans.info/blog/{{blogItem.id}}"
-                         data-layout="box_count"
-                         data-action="like"
-                         data-size="small"
-                         data-show-faces="false"
-                         data-share="true">
-                    </div>
-                </div>
             </div>
         </section>
-        <div class="fb-comments" data-href="https://usmans.info/blog/{{blogItem.id}}" data-numposts="5"
-             data-colorscheme="light"></div>
+
     </div>
 </div>
 <hr/>
