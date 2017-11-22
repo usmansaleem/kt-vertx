@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
@@ -42,24 +43,6 @@
     <![endif]-->
 </head>
 <body>
-<script>
-    $(function () {
-        $("#refresh_blog").click(function () {
-            // validate and process form here
-            $('#refresh_success').hide()
-            $('#refresh_error').hide()
-            var u = "/protected/refresh/" + $("#gist_tag").val();
-            $.get(u, function (data) {
-                $('#refresh_success').text(data.message);
-                $('#refresh_success').show();
-
-            }).fail(function (data) {
-                $('#refresh_error').text(data.responseText);
-                $('#refresh_error').show();
-            });
-        });
-    });
-</script>
 
 <div class="container">
     <div class="page-header">
@@ -101,10 +84,28 @@
         </div>
         <div class="panel-body">
             {{#each blogItems}}
-            <a href="/protected/blog/edit/{{this.id}}" class="list-group-item">{{this.title}}</a>
+            <a href="/protected/blog/{{this.id}}" class="list-group-item">{{this.title}}</a>
             {{/each}}
         </div>
     </div>
 </div>
+<script>
+    $(document).ready(function() {
+        $("#refresh_blog").click(function () {
+            // validate and process form here
+            $('#refresh_success').hide()
+            $('#refresh_error').hide()
+            var u = "/protected/refresh/" + $("#gist_tag").val();
+            $.get(u, function (data) {
+                $('#refresh_success').text(data.message);
+                $('#refresh_success').show();
+
+            }).fail(function (data) {
+                $('#refresh_error').text(data.responseText);
+                $('#refresh_error').show();
+            });
+        });
+    });
+</script>
 </body>
 </html>

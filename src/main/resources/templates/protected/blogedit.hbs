@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
@@ -27,15 +28,14 @@
             integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
             crossorigin="anonymous"></script>
 
-    <!-- gist embed -->
-    <script type="text/javascript"
-            src="https://cdnjs.cloudflare.com/ajax/libs/gist-embed/2.4/gist-embed.min.js"></script>
-
-
     <!-- Custom CSS -->
     <link rel="stylesheet" type="text/css" href="/css/custom.css">
     <link rel="stylesheet" type="text/css" href="/css/navbar.css">
     <link rel="stylesheet" type="text/css" href="/css/bsnavbarfix.css">
+
+    <!-- include summernote css/js-->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.8/summernote.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.8/summernote.js"></script>
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -47,34 +47,66 @@
 </head>
 <body>
 
-<div>
-    <div class="container">
-        <h1>Edit</h1>
-        <br/>
-        <section>
-            <div class="media">
-                <div class="media-left">
-                    <div class="date">
-                        <span class="day">{{blogItem.createDay}}</span>
-                        <span class="month">{{blogItem.createMonth}}</span>
-                        <span class="year">{{blogItem.createYear}}</span>
-                    </div>
-                </div>
-                <div class="media-body">
-                    <h3 class="media-heading">{{blogItem.title}}</h3>
-                    {{#each blogItem.categories}}
-                    <span class="label label-default">{{this.name}}</span>
-                    {{/each}}
-                    <hr/>
-                    <article class="blog-body" id="blogID_{{blogItem.id}}">
-                        <div>{{{blogItem.body}}}</div>
-                    </article>
-                    <br><br>
-                </div>
-            </div>
-        </section>
 
+<div class="container">
+    <h1>Edit Blog {{blogItem.id}}</h1>
+
+    <div class="input-group">
+        <span class="input-group-addon">Title</span>
+        <input id="blogTitle" type="text" class="form-control" value="{{blogItem.title}}">
     </div>
+
+    <div class="input-group">
+        <span class="input-group-addon">https://usmans.info/blog/</span>
+        <input id="blogUrlFriendly" type="text" class="form-control" value="{{blogItem.urlFriendlyId}}">
+    </div>
+
+    <div class="input-group">
+        <span class="input-group-addon">Categories</span>
+        <input id="blogCategory" type="text" class="form-control"
+               value="{{#each blogItem.categories}}{{this.name}},{{/each}}">
+    </div>
+
+    <div class="input-group">
+        <span class="input-group-addon">Description</span>
+        <input id="blogDescription" type="text" class="form-control" value="{{blogItem.description}}">
+    </div>
+
+    <hr>
 </div>
+<div id="blogBody">{{{blogItem.body}}}</div>
+<div>
+    <button id="saveBlog" class="btn btn-default" type="button">Save</button>
+    <div id="refresh_success" class="alert alert-success" role="alert" style="display:none"></div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        //init editor
+        $('#blogBody').summernote({
+            height: 300,                 // set editor height
+            minHeight: null,             // set minimum height of editor
+            maxHeight: null,             // set maximum height of editor
+            focus: true                  // set focus to editable area after initializing summernote
+        });
+
+        $('#saveBlog').click(function () {
+            var data = {
+                'title': document.getElementById("blogTitle").value,
+                'urlFriendlyId': document.getElementById("blogUrlFriendly").value,
+                'categories': document.getElementById("blogCategory").value,
+                'description': document.getElementById("blogDescription").value,
+                'body': $('#blogBody').summernote('code')
+            };
+
+
+            var posting = $.post( "#", data );
+            posting.done(function (data) {
+                $('#refresh_success').text(data.message);
+                $('#refresh_success').show();
+            })
+        });
+    });
+</script>
 </body>
 </html>

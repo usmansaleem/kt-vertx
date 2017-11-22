@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.module.kotlin.readValue
 import info.usmans.blog.model.BlogItem
 import info.usmans.blog.model.BlogItemMaps
+import info.usmans.blog.model.Category
 import info.usmans.blog.model.Message
 import io.vertx.core.Handler
 import io.vertx.core.Vertx
@@ -16,6 +17,8 @@ import io.vertx.ext.web.client.HttpRequest
 import io.vertx.ext.web.client.WebClient
 import io.vertx.ext.web.client.WebClientOptions
 import io.vertx.ext.web.templ.TemplateEngine
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 fun blogItemListFromJson(dataJson: Buffer): List<BlogItem>? {
     try {
@@ -141,6 +144,36 @@ fun blogEditByTemplateHandler(blogItem: BlogItemMaps, templateEngine: TemplateEn
             }
         })
 
+    } else {
+        rc.response().endWithErrorJson("Invalid Blog Request for id $blogItemId")
+    }
+}
+
+fun blogEditPostHandler(blogItem: BlogItemMaps) = Handler<RoutingContext> { rc ->
+    val blogItemId = rc.request().getParam("blogId").toLongOrNull() ?: 0
+    val existingBlogItem = blogItem.getblogItemMap().get(blogItemId)
+    if (existingBlogItem != null) {
+        //obtain submitted values ...
+        val urlFriendlyId = rc.request().getFormAttribute("urlFriendlyId") ?: existingBlogItem.urlFriendlyId
+        val title = rc.request().getFormAttribute("title") ?: existingBlogItem.title
+        val description = rc.request().getFormAttribute("description") ?: existingBlogItem.description
+        val body = rc.request().getFormAttribute("body") ?: existingBlogItem.body
+        val categories = rc.request().getFormAttribute("categories")
+        val categoryList = if (categories.isNullOrBlank())
+            emptyList<Category>()
+        else
+            categories.split(",").mapIndexed { i, s ->
+                Category(i, s.trim())
+            }
+
+
+        val modifiedOn = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
+
+        val modifiedBlogItem = existingBlogItem.copy(urlFriendlyId = urlFriendlyId, title = title, description = description, body = body, modifiedOn = modifiedOn, categories = categoryList)
+        blogItem.getblogItemMap().put(blogItemId, modifiedBlogItem)
+        blogItem.reInitPagedBlogItems()
+
+        rc.response().sendJson(Json.encode(Message("Blog Successfully updated")))
     } else {
         rc.response().endWithErrorJson("Invalid Blog Request for id $blogItemId")
     }

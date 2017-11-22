@@ -123,7 +123,9 @@ class ServerVerticle : AbstractVerticle() {
 
             get("/protected").handler(protectedPageByTemplateHandler(blogItemsMap, templateEngine))
 
-            get("/protected/blog/edit/:id").handler(blogEditByTemplateHandler(blogItemsMap, templateEngine))
+            get("/protected/blog/:id").handler(blogEditByTemplateHandler(blogItemsMap, templateEngine))
+
+            post("/protected/blog/:blogId").handler(blogEditPostHandler(blogItemsMap))
 
             get("/protected/refresh/:tag").handler(refreshBlogJsonHandler(vertx, blogItemsMap))
 

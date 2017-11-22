@@ -31,26 +31,7 @@ data class Category(val id: Int = 0, val name: String = "")
 data class Message(val message: String = "")
 
 
-fun initPagedBlogItems(blogItems: List<BlogItem>): Map<Int, List<BlogItem>> {
-    val blogItemCount = blogItems.size
-    val itemsOnLastPage = blogItemCount % BLOG_ITEMS_PER_PAGE
-    val totalPagesCount = if (itemsOnLastPage == 0) blogItemCount / BLOG_ITEMS_PER_PAGE else blogItemCount / BLOG_ITEMS_PER_PAGE + 1
 
-    val pagedBlogItems = mutableMapOf<Int, List<BlogItem>>()
-
-    for (pageNumber in totalPagesCount downTo 1) {
-        var endIdx = (pageNumber * BLOG_ITEMS_PER_PAGE)
-        val startIdx = endIdx - BLOG_ITEMS_PER_PAGE
-
-        if ((pageNumber == totalPagesCount) && (itemsOnLastPage != 0)) {
-            endIdx = startIdx + itemsOnLastPage
-        }
-        val pagedList = blogItems.subList(startIdx, endIdx) //sort??
-        pagedBlogItems.put(pageNumber, pagedList)
-    }
-
-    return pagedBlogItems
-}
 
 class BlogItemMaps {
 
@@ -62,8 +43,7 @@ class BlogItemMaps {
     fun initBlogItemMaps(blogItems: List<BlogItem>) {
         this.blogItemMap.clear()
         this.blogItemMap.putAll(blogItems.associateBy({ it.id }) { it })
-        this.pagedBlogItems.clear()
-        this.pagedBlogItems.putAll(initPagedBlogItems(blogItemMap.values.toList().sortedByDescending(BlogItem::id)))
+        reInitPagedBlogItems()
     }
 
     fun getblogItemMap() = blogItemMap
@@ -73,5 +53,29 @@ class BlogItemMaps {
     fun getHighestPage() = pagedBlogItems.lastKey()
 
     fun getBlogCount() = blogItemMap.size
+
+    fun reInitPagedBlogItems(){
+        val sortedBlogItemsList = blogItemMap.values.toList().sortedByDescending(BlogItem::id)
+        val blogItemCount = sortedBlogItemsList.size
+        val itemsOnLastPage = blogItemCount % BLOG_ITEMS_PER_PAGE
+        val totalPagesCount = if (itemsOnLastPage == 0) blogItemCount / BLOG_ITEMS_PER_PAGE else blogItemCount / BLOG_ITEMS_PER_PAGE + 1
+
+        val pagedBlogItems = mutableMapOf<Int, List<BlogItem>>()
+
+
+        for (pageNumber in totalPagesCount downTo 1) {
+            var endIdx = (pageNumber * BLOG_ITEMS_PER_PAGE)
+            val startIdx = endIdx - BLOG_ITEMS_PER_PAGE
+
+            if ((pageNumber == totalPagesCount) && (itemsOnLastPage != 0)) {
+                endIdx = startIdx + itemsOnLastPage
+            }
+            val pagedList = sortedBlogItemsList.subList(startIdx, endIdx) //sort??
+            pagedBlogItems.put(pageNumber, pagedList)
+        }
+
+        this.pagedBlogItems.clear()
+        this.pagedBlogItems.putAll(pagedBlogItems)
+    }
 }
 
