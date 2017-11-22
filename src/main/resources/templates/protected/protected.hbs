@@ -1,103 +1,110 @@
 <html>
-   <head>
-      <meta charset="utf-8">
-      <meta http-equiv="X-UA-Compatible" content="IE=edge">
-      <meta name="viewport" content="width=device-width, initial-scale=1">
-      <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
-      <title>Protected</title>
-      <!-- font awsome -->
-      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css">
-      <!-- JQuery -->
-      <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
-      <!-- Bootstrap Scripts -->
-      <!-- Latest compiled and minified CSS -->
-      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
-         integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-      <!-- Optional theme -->
-      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css"
-         integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
-      <!-- Latest compiled and minified JavaScript -->
-      <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
-         integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
-         crossorigin="anonymous"></script>
-      <!-- gist embed -->
-      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/gist-embed/2.4/gist-embed.min.js"></script>
-      <!-- Custom CSS -->
-      <link rel="stylesheet" type="text/css" href="/css/custom.css">
-      <link rel="stylesheet" type="text/css" href="/css/navbar.css">
-      <link rel="stylesheet" type="text/css" href="/css/bsnavbarfix.css">
-      <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
-      <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-      <!--[if lt IE 9]>
-      <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
-      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-      <![endif]-->
-   </head>
-   <body>
-   <script>
-    $(function() {
-       $("#refresh_blog").click(function() {
-         // validate and process form here
-         $('#refresh_success').hide()
-         $('#refresh_error').hide()
-         var u = "/protected/refresh/" + $("#gist_tag").val();
-         $.get(u, function(data){
-             $('#refresh_success').text(data.message);
-             $('#refresh_success').show();
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <title>Protected (Admin Area)</title>
 
-         }).fail(function(data) {
-            $('#refresh_error').text(data.responseText);
-            $('#refresh_error').show();
-         });
-       });
-     });
-   </script>
+    <!-- font awsome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
-      <div class="container">
-         <div class="page-header">
-            <h1>Admin Area</h1>
-         </div>
+    <!-- JQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+
+    <!-- Bootstrap Scripts -->
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+          integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css"
+          integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
+            integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+            crossorigin="anonymous"></script>
+
+    <!-- gist embed -->
+    <script type="text/javascript"
+            src="https://cdnjs.cloudflare.com/ajax/libs/gist-embed/2.4/gist-embed.min.js"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" type="text/css" href="/css/custom.css">
+    <link rel="stylesheet" type="text/css" href="/css/navbar.css">
+    <link rel="stylesheet" type="text/css" href="/css/bsnavbarfix.css">
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+    <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+<body>
+<script>
+    $(function () {
+        $("#refresh_blog").click(function () {
+            // validate and process form here
+            $('#refresh_success').hide()
+            $('#refresh_error').hide()
+            var u = "/protected/refresh/" + $("#gist_tag").val();
+            $.get(u, function (data) {
+                $('#refresh_success').text(data.message);
+                $('#refresh_success').show();
+
+            }).fail(function (data) {
+                $('#refresh_error').text(data.responseText);
+                $('#refresh_error').show();
+            });
+        });
+    });
+</script>
+
+<div class="container">
+    <div class="page-header">
+        <h1>Admin Area</h1>
+    </div>
 
 
-         <div  class="panel panel-default">
-             <div class="panel-heading">
-                                <div class="row">
-                                           <div class="col-lg-6">
-                                             <div class="input-group">
-                                               <input id="gist_tag" type="text" class="form-control" placeholder="gist tag">
-                                               <span class="input-group-btn">
-                                                 <button id="refresh_blog" class="btn btn-default" type="button">Refresh Blog!</button>
-                                               </span>
-                                             </div><!-- /input-group -->
-                                           </div><!-- /.col-lg-6 -->
-                                         </div><!-- /.row -->
-              </div>
-              <div class="panel-body">
-                <div id="refresh_success" class="alert alert-success" role="alert" style="display:none"></div>
-                <div id="refresh_error" class="alert alert-danger" role="alert" style="display:none"></div>
-              </div>
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="input-group">
+                        <input id="gist_tag" type="text" class="form-control" placeholder="gist tag">
+                        <span class="input-group-btn">
+                           <button id="refresh_blog" class="btn btn-default" type="button">Refresh Blog!</button>
+                        </span>
+                    </div><!-- /input-group -->
+                </div><!-- /.col-lg-6 -->
+            </div><!-- /.row -->
+        </div>
+        <div class="panel-body">
+            <div id="refresh_success" class="alert alert-success" role="alert" style="display:none"></div>
+            <div id="refresh_error" class="alert alert-danger" role="alert" style="display:none"></div>
+        </div>
 
-         </div>
+    </div>
 
-         <div class="panel panel-default">
-                     <div class="panel-heading">
-                        <h3 class="panel-title">Access Token</h3>
-                     </div>
-                     <div class="panel-body">
-                       <p>{{accessToken}}</p>
-                     </div>
-         </div>
-         <div class="panel panel-default">
-            <div class="panel-heading">
-               <h3 class="panel-title">Blog List</h3>
-            </div>
-            <div class="panel-body">
-               {{#each blogItems}}
-               <a href="/protected/blog/edit/{{this.id}}" class="list-group-item">{{this.title}}</a>
-               {{/each}}
-            </div>
-         </div>
-      </div>
-      </div>
-   </body>
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">Access Token</h3>
+        </div>
+        <div class="panel-body">
+            <p>{{accessToken}}</p>
+        </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">Blog List</h3>
+        </div>
+        <div class="panel-body">
+            {{#each blogItems}}
+            <a href="/protected/blog/edit/{{this.id}}" class="list-group-item">{{this.title}}</a>
+            {{/each}}
+        </div>
+    </div>
+</div>
+</body>
 </html>

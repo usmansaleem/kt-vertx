@@ -8,7 +8,7 @@
     <title>{{blogItem.title}}</title>
 
     <!-- font awsome -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
     <!-- JQuery -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
@@ -28,9 +28,8 @@
             crossorigin="anonymous"></script>
 
     <!-- gist embed -->
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/gist-embed/2.4/gist-embed.min.js"></script>
-
-
+    <script type="text/javascript"
+            src="https://cdnjs.cloudflare.com/ajax/libs/gist-embed/2.4/gist-embed.min.js"></script>
 
     <!-- Custom CSS -->
     <link rel="stylesheet" type="text/css" href="/css/custom.css">
@@ -45,12 +44,12 @@
     <![endif]-->
 
     <!-- Open Graph tags -->
-    <meta property="og:url"           content="https://usmans.info/blog/{{blogItem.id}}" />
-    <meta property="og:type"          content="article" />
-    <meta property="og:title"         content="{{blogItem.title}}" />
-    <meta property="og:description"   content="{{blogItem.title}}" />
-    <meta property="og:image"         content="https://usmans.info/images/usman_fb.jpg" />
-    <meta property="fb:app_id"        content="142645833160332" />
+    <meta property="og:url" content="https://usmans.info/blog/{{blogItem.id}}"/>
+    <meta property="og:type" content="article"/>
+    <meta property="og:title" content="{{blogItem.title}}"/>
+    <meta property="og:description" content="{{blogItem.title}}"/>
+    <meta property="og:image" content="https://usmans.info/images/usman_profile.jpg"/>
+    <meta property="fb:app_id" content="142645833160332"/>
 
 </head>
 <body>
@@ -85,11 +84,11 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-                        <a class="navbar-brand" href="/#!/">
-                            <div class="navbar-brand-name">
-                                <img style="width:32px;height:32px;" src="/images/usman_fb.jpg" alt="Usman"/> Usman's Blog
-                            </div>
-                        </a>
+            <a class="navbar-brand" href="/#!/">
+                <div class="navbar-brand-name">
+                    <img style="width:32px;height:32px;" src="/images/usman_profile.jpg" alt="Usman"/> Usman's Blog
+                </div>
+            </a>
         </div>
 
         <nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">
@@ -123,7 +122,7 @@
                 <div class="media-body">
                     <h3 class="media-heading">{{blogItem.title}}</h3>
                     {{#each blogItem.categories}}
-                       <span class="label label-default">{{this.name}}</span>
+                    <span class="label label-default">{{this.name}}</span>
                     {{/each}}
                     <hr/>
                     <article class="blog-body" id="blogID_{{blogItem.id}}">

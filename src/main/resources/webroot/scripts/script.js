@@ -25,25 +25,6 @@ blogApp.config(function($routeProvider) {
 
     });
 
-blogApp.directive('readmoreDirective', function() {
-    return function(scope, element, attrs) {
-	scope.$watch('blogItem', function(){
-		angular.element('article').readmore();
-	});	
-
-    }
-});
-
-blogApp.directive('gistDirective', function() {
-    return function(scope, element, attrs) {
-        scope.$watch('blogItem', function(){
-            angular.element('[data-gist-id]').gist();
-        });
-
-    }
-});
-
-
 
 // create the controller and inject Angular's $scope
 blogApp.controller('mainCtrl', function($scope, $http, $log, $sce) {

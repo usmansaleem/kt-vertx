@@ -8,7 +8,7 @@
     <title>Editing {{blogItem.id}}</title>
 
     <!-- font awsome -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
     <!-- JQuery -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
@@ -28,8 +28,8 @@
             crossorigin="anonymous"></script>
 
     <!-- gist embed -->
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/gist-embed/2.4/gist-embed.min.js"></script>
-
+    <script type="text/javascript"
+            src="https://cdnjs.cloudflare.com/ajax/libs/gist-embed/2.4/gist-embed.min.js"></script>
 
 
     <!-- Custom CSS -->
@@ -63,7 +63,7 @@
                 <div class="media-body">
                     <h3 class="media-heading">{{blogItem.title}}</h3>
                     {{#each blogItem.categories}}
-                       <span class="label label-default">{{this.name}}</span>
+                    <span class="label label-default">{{this.name}}</span>
                     {{/each}}
                     <hr/>
                     <article class="blog-body" id="blogID_{{blogItem.id}}">
@@ -76,11 +76,5 @@
 
     </div>
 </div>
-<hr/>
-<footer class="footer">
-    <div class="container-fluid small text-muted">(c) Usman Saleem. 2005-2017. Version 4.0</div>
-</footer>
-
-
 </body>
 </html>
