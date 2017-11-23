@@ -17,6 +17,7 @@ import io.vertx.ext.web.Router
 import io.vertx.ext.web.handler.*
 import io.vertx.ext.web.sstore.LocalSessionStore
 import io.vertx.ext.web.templ.HandlebarsTemplateEngine
+import java.io.File
 
 /**
  * Server Verticle - Launching Http and Https server on port 8080 and 8443.
@@ -44,24 +45,17 @@ class ServerVerticle : AbstractVerticle() {
 
     private val blogItemsMap = BlogItemMaps()
     private val templateEngine = HandlebarsTemplateEngine.create()
+    private val checkoutDir = checkoutGist()
 
     override fun start(startFuture: Future<Void>?) {
-        readJsonData(vertx, DATA_JSON_GIST_TAG).send({ ar ->
-            if (ar.succeeded()) {
-                val loadedBlogItemList = blogItemListFromJson(ar.result().body())
-                if(loadedBlogItemList == null) {
-                    startFuture?.fail("Unable to load data json")
-                }else {
-                    blogItemsMap.initBlogItemMaps(loadedBlogItemList)
-
-                    val router = createRouter()
-
-                    createHttpServers(router, startFuture)
-                }
-            } else {
-                startFuture?.fail(ar.cause())
-            }
-        })
+        val loadedBlogItemList =  blogItemListFromJson(File(checkoutDir, "data.json").readText())
+        if(loadedBlogItemList == null) {
+            startFuture?.fail("Unable to load data json")
+        }else {
+            blogItemsMap.initBlogItemMaps(loadedBlogItemList)
+            val router = createRouter()
+            createHttpServers(router, startFuture)
+        }
     }
 
     private fun createRouter() = Router.router(vertx).apply {
@@ -123,12 +117,13 @@ class ServerVerticle : AbstractVerticle() {
 
             get("/protected").handler(protectedPageByTemplateHandler(blogItemsMap, templateEngine))
 
-            get("/protected/blog/:id").handler(blogEditByTemplateHandler(blogItemsMap, templateEngine))
+            get("/protected/blog/edit/:id").handler(blogEditGetHandler(blogItemsMap, templateEngine))
 
-            post("/protected/blog/:blogId").handler(blogEditPostHandler(blogItemsMap))
+            post("/protected/blog/edit/:blogId").blockingHandler(blogEditPostHandler(blogItemsMap, checkoutDir))
 
-            get("/protected/refresh/:tag").handler(refreshBlogJsonHandler(vertx, blogItemsMap))
+            get("/protected/blog/new").handler(blogNewGetHandler(blogItemsMap, templateEngine))
 
+            post("/protected/blog/new").blockingHandler(blogNewPostHandler(blogItemsMap, checkoutDir))
         }
     }
 

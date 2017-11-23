@@ -34,4 +34,14 @@ Date CSS taken from http://www.wplover.com/1449/easier-date-display-technique-wi
   -moz-transform: rotate(-90deg);
   }
 
+/* Other custom stuff */
 
+.fb-left {
+  float: left;
+}
+
+.last-modified {
+  float: right;
+  font-style: italic;
+  font-size: x-small;
+}

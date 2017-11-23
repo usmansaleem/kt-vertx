@@ -64,7 +64,7 @@
     <div class="input-group">
         <span class="input-group-addon">Categories</span>
         <input id="blogCategory" type="text" class="form-control"
-               value="{{#each blogItem.categories}}{{this.name}},{{/each}}">
+               value="{{#each blogItem.categories}}{{this.name}}{{#unless @last}},{{/unless}}{{/each}}">
     </div>
 
     <div class="input-group">
@@ -78,6 +78,7 @@
 <div>
     <button id="saveBlog" class="btn btn-default" type="button">Save</button>
     <div id="refresh_success" class="alert alert-success" role="alert" style="display:none"></div>
+    <div id="refresh_info" class="alert alert-info" role="alert" style="display:none"></div>
 </div>
 
 <script>
@@ -99,9 +100,11 @@
                 'body': $('#blogBody').summernote('code')
             };
 
-
+            $('#refresh_info').text('Waiting...');
+            $('#refresh_info').show();
             var posting = $.post( "#", data );
             posting.done(function (data) {
+                $('#refresh_info').hide();
                 $('#refresh_success').text(data.message);
                 $('#refresh_success').show();
             })

@@ -54,27 +54,15 @@
 
 </head>
 <body>
-<script>
-    window.fbAsyncInit = function () {
-        FB.init({
-            appId: '142645833160332',
-            xfbml: true,
-            version: 'v2.11'
-        });
-        FB.AppEvents.logPageView();
-    };
-
-    (function (d, s, id) {
-        var js, fjs = d.getElementsByTagName(s)[0];
-        if (d.getElementById(id)) {
-            return;
-        }
-        js = d.createElement(s);
-        js.id = id;
-        js.src = "https://connect.facebook.net/en_US/sdk.js";
-        fjs.parentNode.insertBefore(js, fjs);
-    }(document, 'script', 'facebook-jssdk'));
-</script>
+<div id="fb-root"></div>
+<script>(function (d, s, id) {
+    var js, fjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) return;
+    js = d.createElement(s);
+    js.id = id;
+    js.src = 'https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.11&appId=142645833160332';
+    fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
 
 <nav class="navbar navbar-inverse navbar-fixed-top bs-docs-nav">
     <div class="container-fluid">
@@ -98,9 +86,6 @@
                     <a href="/#!/"><i class="fa fa-home"></i> Home</a>
                 </li>
                 <li>
-                    <a href="/#!/notes"><i class="fa fa-book"></i> Notes</a>
-                </li>
-                <li>
                     <a href="/#!/about"><i class="fa fa-user"></i> About</a>
                 </li>
             </ul>
@@ -121,30 +106,30 @@
                     </div>
                 </div>
                 <div class="media-body">
-                    <h3 class="media-heading">{{blogItem.title}}</h3>
+                    <h1 class="media-heading">{{blogItem.title}}</h1>
                     {{#each blogItem.categories}}
                     <span class="label label-default">{{this.name}}</span>
                     {{/each}}
+
                     <hr/>
                     <article class="blog-body" id="blogID_{{blogItem.id}}">
                         <div>{{{blogItem.body}}}</div>
                     </article>
-                    <br><br>
-                </div>
-                <div class="media-right">
-                    <div class="fb-like"
-                         data-href="https://usmans.info/blog/{{blogItem.id}}"
-                         data-layout="box_count"
-                         data-action="like"
-                         data-size="small"
-                         data-show-faces="false"
-                         data-share="true">
-                    </div>
+                    <br>
+                    <span class="fb-left">
+                        <div class="fb-like" data-href="https://usmans.info/blog/{{blogItem.id}}"
+                             data-layout="button_count" data-action="recommend" data-size="small" data-show-faces="false"
+                             data-share="true"></div>
+                    </span>
+
+                    <span class="last-modified">Last Modified On: {{blogItem.modifiedOn}}</span>
+                    <hr>
+                    <div class="fb-comments" data-href="https://usmans.info/blog/{{blogItem.id}}" data-numposts="5"
+                         data-colorscheme="light" width="100%"></div>
                 </div>
             </div>
         </section>
-        <div class="fb-comments" data-href="https://usmans.info/blog/{{blogItem.id}}" data-numposts="5"
-             data-colorscheme="light"></div>
+
     </div>
 </div>
 <hr/>

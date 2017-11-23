@@ -1,13 +1,16 @@
 package info.usmans.blog.vertx
 
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 import java.nio.charset.StandardCharsets
 import java.util.*
 
-internal const val DATA_JSON_GIST_TAG = "ba859b5a47303ba2486f7cb88b3c46217ce45878"
 internal const val OAUTH_SITE = "https://uzi.au.auth0.com"
 internal const val OAUTH_TOKEN_PATH = "/oauth/token"
 internal const val OAUTH_AUTHZ_PATH = "/authorize"
 internal const val OAUTH_USERINFO_PATH = "/userinfo"
+internal const val GIST_REPO_URL = "https://gist.github.com/9bb0e98d05caa0afcc649b6593733edf.git"
+
+fun gitCredentialProvider(gistToken: String = System.getenv("GITHUB_GIST_TOKEN")) = UsernamePasswordCredentialsProvider(gistToken, "")
 
 /**
  * We are expecting Base64 single line encoded of PEM certificates

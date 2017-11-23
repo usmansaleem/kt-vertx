@@ -48,27 +48,7 @@
     <div class="page-header">
         <h1>Admin Area</h1>
     </div>
-
-
-    <div class="panel panel-default">
-        <div class="panel-heading">
-            <div class="row">
-                <div class="col-lg-6">
-                    <div class="input-group">
-                        <input id="gist_tag" type="text" class="form-control" placeholder="gist tag">
-                        <span class="input-group-btn">
-                           <button id="refresh_blog" class="btn btn-default" type="button">Refresh Blog!</button>
-                        </span>
-                    </div><!-- /input-group -->
-                </div><!-- /.col-lg-6 -->
-            </div><!-- /.row -->
-        </div>
-        <div class="panel-body">
-            <div id="refresh_success" class="alert alert-success" role="alert" style="display:none"></div>
-            <div id="refresh_error" class="alert alert-danger" role="alert" style="display:none"></div>
-        </div>
-
-    </div>
+    <a href="/protected/blog/new" class="btn btn-primary">New Blog Entry</a>
 
     <div class="panel panel-default">
         <div class="panel-heading">
@@ -84,28 +64,11 @@
         </div>
         <div class="panel-body">
             {{#each blogItems}}
-            <a href="/protected/blog/{{this.id}}" class="list-group-item">{{this.title}}</a>
+            <a href="/protected/blog/edit/{{this.id}}" class="list-group-item">{{this.title}}</a>
             {{/each}}
         </div>
     </div>
 </div>
-<script>
-    $(document).ready(function() {
-        $("#refresh_blog").click(function () {
-            // validate and process form here
-            $('#refresh_success').hide()
-            $('#refresh_error').hide()
-            var u = "/protected/refresh/" + $("#gist_tag").val();
-            $.get(u, function (data) {
-                $('#refresh_success').text(data.message);
-                $('#refresh_success').show();
 
-            }).fail(function (data) {
-                $('#refresh_error').text(data.responseText);
-                $('#refresh_error').show();
-            });
-        });
-    });
-</script>
 </body>
 </html>

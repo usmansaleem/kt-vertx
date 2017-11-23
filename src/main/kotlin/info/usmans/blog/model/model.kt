@@ -1,5 +1,7 @@
 package info.usmans.blog.model
 
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 internal const val BLOG_ITEMS_PER_PAGE = 10
@@ -14,11 +16,11 @@ data class BlogItem(
         val description: String? = "",
         val body: String? = "",
         var blogSection: String? = "Main",
-        val createdOn: String? = "",
-        val modifiedOn: String? ="",
-        val createDay: String? = "",
-        val createMonth: String? = "",
-        val createYear: String? = "",
+        val createdOn: String? = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE),
+        val modifiedOn: String? =LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE),
+        val createDay: String? = LocalDate.now().format(DateTimeFormatter.ofPattern("dd")),
+        val createMonth: String? = LocalDate.now().format(DateTimeFormatter.ofPattern("MMM")),
+        val createYear: String? = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy")),
         val categories: List<Category>? = emptyList()
 )
 

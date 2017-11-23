@@ -4,6 +4,7 @@
 .git/
 .gitignore
 build/
+out/
 
 #Dont ignore our artifact
 !build/libs/uzi-vertx-shadow.jar
