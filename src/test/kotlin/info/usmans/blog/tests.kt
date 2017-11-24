@@ -5,6 +5,7 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import info.usmans.blog.model.BlogItem
 import info.usmans.blog.vertx.checkoutGist
 import info.usmans.blog.vertx.commitGist
+import info.usmans.blog.vertx.gitPushStatus
 import io.vertx.core.json.Json
 import org.junit.Before
 import org.junit.Test
@@ -51,6 +52,7 @@ class TestSource {
         val revCommit = commitGist(checkoutDir)
         assertEquals("commit from jgit", revCommit.fullMessage)
 
+        gitPushStatus(checkoutDir)
         //pushGist(checkoutDir, gitCredentialProvider(""))
     }
 }

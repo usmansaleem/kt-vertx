@@ -2,31 +2,32 @@
 <meta view-head property="og:url" content="{{$location.absUrl()}}"/>
 <meta view-head property="og:title" content="Page {{bigCurrentPage}} - Usman Saleem - Blog"/>
 <meta view-head property="og:description" content="Things I learn, observe and tryout."/>
-<div class="jumbotron" ng-show="showJumbotron()">
+
+<div class="jumbotron jumbotron-fluid" ng-show="showJumbotron()">
     <div class="container">
-        <h1>Usman Saleem</h1>
-        <p>An IT professional specialising in enterprise development (Java, Kotlin, JEE, Spring), DevOps/containerization/docker
-            with bits of Angular and the likes. Blogging about things I learn, observe and tryout ...
+        <h1 class="display-2">Usman Saleem</h1>
+        <p class="lead">An IT professional specialising in enterprise development (Java, Kotlin, JEE, Spring),
+            DevOps/containerization/docker
+            with bits of Angular and the likes.
         </p>
+        <hr class="my-4">
+        <p>Blogging about things I learn, observe and tryout ...</p>
     </div>
 </div>
 
 <div class="container">
-    <div class="page-header">
-        <h1>Latest Articles ...</h1>
-    </div>
+    <h1>Latest Articles ...</h1>
+
     <!-- Blog -->
-    <section ng-repeat="blogItem in blogItems">
-        <div class="media">
+    <ul class="list-unstyled">
+        <li class="media my-4" ng-repeat="blogItem in blogItems">
             <div class="media-body">
-                <h3 class="media-heading"><a href="/blog/{{blogItem.id}}">{{blogItem.title}}</a></h3>
-                <article class="blog-body" id="blogID_{{blogItem.id}}">
-                    <div ng-bind-html=blogItem.description></div>
-                </article>
+                <h5 class="mt-0 mb-1"><a href="/blog/{{blogItem.id}}">{{blogItem.title}}</a></h5>
+                <div ng-bind-html=blogItem.description></div>
             </div>
             <hr/>
-        </div>
-    </section>
+        </li>
+    </ul>
 
     <div class="text-center">
         <ul uib-pagination total-items="bigTotalItems" ng-model="bigCurrentPage" max-size="maxSize" num-pages="numPages"
