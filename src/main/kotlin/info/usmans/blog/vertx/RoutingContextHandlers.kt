@@ -11,6 +11,7 @@ import io.vertx.core.http.HttpHeaders
 import io.vertx.core.json.Json
 import io.vertx.ext.auth.oauth2.AccessToken
 import io.vertx.ext.web.RoutingContext
+import io.vertx.ext.web.impl.Utils
 import io.vertx.ext.web.templ.TemplateEngine
 import java.io.File
 
@@ -57,18 +58,26 @@ fun blogItemByIdHandler(blogItemUtil: BlogItemUtil) = Handler<RoutingContext> { 
 }
 
 fun siteMapHandler(blogItemUtil: BlogItemUtil) = Handler<RoutingContext> { rc ->
-    rc.response().putHeader("Content-Type", "text; charset=utf-8").end(blogItemUtil.getBlogItemIdList().joinToString("\n") {
-        "${rc.request().getOAuthRedirectURI("/blog/")}$it"
+    rc.response().putHeader("Content-Type", "text; charset=utf-8").end(blogItemUtil.getBlogItemUrlList().joinToString("\n") {
+        "${rc.request().getOAuthRedirectURI("/usmansaleem/blog/")}$it"
     })
+}
+
+fun blogByFriendlyUrl(blogItemUtil: BlogItemUtil, templateEngine: TemplateEngine) = Handler<RoutingContext> { rc ->
+    val friendlyUrl = rc.request().getParam("url")
+    blogHandlerById(blogItemUtil.getBlogItemForUrl(friendlyUrl), rc, templateEngine)
 }
 
 fun blogByTemplateHandler(blogItemUtil: BlogItemUtil, templateEngine: TemplateEngine) = Handler<RoutingContext> { rc ->
     val blogItemId = rc.request().getParam("id").toLongOrNull() ?: 0
-    val blogItem = blogItemUtil.getBlogItemForId(blogItemId)
+    blogHandlerById(blogItemUtil.getBlogItemForId(blogItemId), rc, templateEngine)
+}
+
+private fun blogHandlerById(blogItem: BlogItem?, rc: RoutingContext, templateEngine: TemplateEngine) {
     if (blogItem != null) {
         //pass blogItem to the template
         rc.put("blogItem", blogItem)
-        templateEngine.render(rc, "templates", io.vertx.ext.web.impl.Utils.normalizePath("blog.hbs"), { res ->
+        templateEngine.render(rc, "templates", Utils.normalizePath("blog.hbs"), { res ->
             if (res.succeeded()) {
                 rc.response().putHeader(HttpHeaders.CONTENT_TYPE, "text/html").end(res.result())
             } else {
@@ -77,7 +86,7 @@ fun blogByTemplateHandler(blogItemUtil: BlogItemUtil, templateEngine: TemplateEn
         })
 
     } else {
-        rc.response().endWithErrorJson("Invalid Blog Request for id: $blogItemId")
+        rc.response().endWithErrorJson("Invalid Blog Request")
     }
 }
 

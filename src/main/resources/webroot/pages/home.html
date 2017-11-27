@@ -19,20 +19,28 @@
     <h1>Latest Articles ...</h1>
 
     <!-- Blog -->
-    <ul class="list-unstyled">
-        <li class="media my-4" ng-repeat="blogItem in blogItems">
-            <div class="media-body">
-                <h5 class="mt-0 mb-1"><a href="/blog/{{blogItem.id}}">{{blogItem.title}}</a></h5>
+    <div class="card-columns">
+        <div class="card p-3" ng-repeat="blogItem in blogItems">
+            <div class="card-body">
+                <h4 class="card-title">{{blogItem.title}}</h4>
+                <p class="card-text">
                 <div ng-bind-html=blogItem.description></div>
+                </p>
+                <a ng-href="/usmansaleem/blog/{{blogItem.urlFriendlyId}}" class="btn btn-primary">Read More</a>
+                <p class="card-text text-right">
+                    <small class="text-muted">{{blogItem.modifiedOn}}</small>
+                </p>
             </div>
-            <hr/>
-        </li>
-    </ul>
-
-    <div class="text-center">
-        <ul uib-pagination total-items="bigTotalItems" ng-model="bigCurrentPage" max-size="maxSize" num-pages="numPages"
-            class="pagination-sm" boundary-link-numbers="true" rotate="false" previous-text="&lsaquo;"
-            next-text="&rsaquo;" ng-change="pageChanged()"></ul>
+        </div>
     </div>
+    <br>
+    <nav aria-label="Page Navigation">
+        <ul class="pagination pagination-sm justify-content-center">
+            <li class="page-item" ng-class="{'disabled': bigCurrentPage == 1}"><a class="page-link" href="" ng-click="pageChanged(bigCurrentPage - 1)">Previous</a></li>
+            <li ng-repeat="_ in ((_ = []) && (_.length=lastPage) && _) track by $index" class="page-item"
+                ng-class="{'active': bigCurrentPage == $index + 1}"><a class="page-link" href="" ng-click="pageChanged($index + 1)">{{ $index + 1 }}</a></li>
+            <li class="page-item" ng-class="{'disabled': bigCurrentPage == lastPage}"><a class="page-link" href="" ng-click="pageChanged(bigCurrentPage + 1)">Next</a></li>
+        </ul>
+    </nav>
 </div>
 

@@ -75,6 +75,8 @@ class ServerVerticle : AbstractVerticle() {
         //Individual Blog Entry from template engine ...
         get("/blog/:id").handler(blogByTemplateHandler(blogItemUtil, templateEngine))
 
+        get("/usmansaleem/blog/:url").handler(blogByFriendlyUrl(blogItemUtil, templateEngine))
+
         secureRoutes()
 
         //static pages

@@ -11,7 +11,7 @@ internal const val BLOG_ITEMS_PER_PAGE = 10
  */
 data class BlogItem(
         val id: Long = 0,
-        val urlFriendlyId: String? = "",
+        val urlFriendlyId: String = "",
         val title: String,
         val description: String? = "",
         val body: String? = "",
@@ -39,17 +39,22 @@ class BlogItemUtil {
     private val pagedBlogItemIdMap: TreeMap<Long, List<Long>> = TreeMap()
     //store blog entries based on id
     private val blogItemMap: TreeMap<Long, BlogItem> = TreeMap(Collections.reverseOrder())
+    private val friendlyUrlMap = mutableMapOf<String, Long>()
 
     fun initBlogItemMaps(blogItems: List<BlogItem>) {
-        this.blogItemMap.clear()
         this.blogItemMap.putAll(blogItems.associateBy({ it.id }) { it })
+        this.friendlyUrlMap.putAll(blogItems.associateBy({ it.urlFriendlyId }) { it.id })
         initPagedBlogItems()
     }
 
     fun getBlogItemIdList() = blogItemMap.keys.toList()
+
+    fun getBlogItemUrlList() = friendlyUrlMap.keys.toList()
+
     fun getBlogItemList() = blogItemMap.values.toList()
 
     fun getBlogItemForId(id: Long) = blogItemMap.get(id)
+    fun getBlogItemForUrl(url: String) = blogItemMap.get(friendlyUrlMap.get(url) ?: 0)
 
     fun putBlogItemForId(id: Long, blogItem: BlogItem) = blogItemMap.put(id, blogItem)
 
