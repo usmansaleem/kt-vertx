@@ -2,7 +2,7 @@ package info.usmans.blog.vertx
 
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import info.usmans.blog.handler.Auth0AuthHandler
-import info.usmans.blog.model.BlogItemMaps
+import info.usmans.blog.model.BlogItemUtil
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Future
 import io.vertx.core.buffer.Buffer
@@ -43,16 +43,16 @@ class ServerVerticle : AbstractVerticle() {
         }
     }
 
-    private val blogItemsMap = BlogItemMaps()
+    private val blogItemUtil = BlogItemUtil()
     private val templateEngine = HandlebarsTemplateEngine.create()
     private val checkoutDir = checkoutGist()
 
     override fun start(startFuture: Future<Void>?) {
-        val loadedBlogItemList =  blogItemListFromJson(File(checkoutDir, "data.json").readText())
-        if(loadedBlogItemList == null) {
+        val loadedBlogItemList = blogItemListFromJson(File(checkoutDir, "data.json").readText())
+        if (loadedBlogItemList == null) {
             startFuture?.fail("Unable to load data json")
-        }else {
-            blogItemsMap.initBlogItemMaps(loadedBlogItemList)
+        } else {
+            blogItemUtil.initBlogItemMaps(loadedBlogItemList)
             val router = createRouter()
             createHttpServers(router, startFuture)
         }
@@ -63,17 +63,17 @@ class ServerVerticle : AbstractVerticle() {
         route().handler(FaviconHandler.create()) //serve favicon.ico from classpath
 
         //REST API routes
-        get("/rest/blog/highestPage").handler(highestPageHandler(blogItemsMap))
-        get("/rest/blog/blogCount").handler(blogCountHandler(blogItemsMap))
-        get("/rest/blog/blogItems/:pageNumber").handler(pageNumberHandler(blogItemsMap))
-        get("/rest/blog/blogItems").handler(blogItemsHandler(blogItemsMap))
-        get("/rest/blog/blogItems/blogItem/:id").handler(blogItemByIdHandler(blogItemsMap))
+        get("/rest/blog/highestPage").handler(highestPageHandler(blogItemUtil))
+        get("/rest/blog/blogCount").handler(blogCountHandler(blogItemUtil))
+        get("/rest/blog/blogItems/:pageNumber").handler(pageNumberHandler(blogItemUtil))
+        get("/rest/blog/blogItems").handler(blogItemsHandler(blogItemUtil))
+        get("/rest/blog/blogItems/blogItem/:id").handler(blogItemByIdHandler(blogItemUtil))
 
         //sitemap (for Google)
-        get("/sitemap.txt").handler(siteMapHandler(blogItemsMap))
+        get("/sitemap.txt").handler(siteMapHandler(blogItemUtil))
 
         //Individual Blog Entry from template engine ...
-        get("/blog/:id").handler(blogByTemplateHandler(blogItemsMap, templateEngine))
+        get("/blog/:id").handler(blogByTemplateHandler(blogItemUtil, templateEngine))
 
         secureRoutes()
 
@@ -115,15 +115,15 @@ class ServerVerticle : AbstractVerticle() {
                             .addAuthority("openid profile email")
             )
 
-            get("/protected").handler(protectedPageByTemplateHandler(blogItemsMap, templateEngine))
+            get("/protected").handler(protectedPageByTemplateHandler(blogItemUtil, templateEngine))
 
-            get("/protected/blog/edit/:id").handler(blogEditGetHandler(blogItemsMap, templateEngine))
+            get("/protected/blog/edit/:id").handler(blogEditGetHandler(blogItemUtil, templateEngine))
 
-            post("/protected/blog/edit/:blogId").blockingHandler(blogEditPostHandler(blogItemsMap, checkoutDir))
+            post("/protected/blog/edit/:blogId").blockingHandler(blogEditPostHandler(blogItemUtil, checkoutDir))
 
-            get("/protected/blog/new").handler(blogNewGetHandler(blogItemsMap, templateEngine))
+            get("/protected/blog/new").handler(blogNewGetHandler(blogItemUtil, templateEngine))
 
-            post("/protected/blog/new").blockingHandler(blogNewPostHandler(blogItemsMap, checkoutDir))
+            post("/protected/blog/new").blockingHandler(blogNewPostHandler(blogItemUtil, checkoutDir))
         }
     }
 
@@ -138,9 +138,9 @@ class ServerVerticle : AbstractVerticle() {
                 listen({ httpServerlistenHandler ->
                     if (httpServerlistenHandler.succeeded()) {
                         println("Http Server (SSL) on port 8443 deployed.")
-                        if(deployUnsecureServer()) {
+                        if (deployUnsecureServer()) {
                             val redirectSSLPort = System.getProperty("redirectSSLPort", "443").toIntOrNull() ?: 443
-                            println("Deploying Forwarding Verticle on 8080 with redirecting to ${redirectSSLPort}...")
+                            println("Deploying Forwarding Verticle on 8080 with redirecting to $redirectSSLPort...")
                             vertx.deployVerticle(ForwardingServerVerticle(redirectSSLPort), { verticleHandler ->
                                 if (verticleHandler.succeeded())
                                     startFuture?.succeeded()
@@ -170,8 +170,6 @@ class ServerVerticle : AbstractVerticle() {
     }
 
 
-
-
     private fun getSSLOptions(blogKeyValue: String, blogCertValue: String, sslPort: Int = 8443): HttpServerOptions {
         return HttpServerOptions().apply {
             isSsl = true
@@ -183,20 +181,4 @@ class ServerVerticle : AbstractVerticle() {
             sslEngineOptions = OpenSSLEngineOptions()
         }
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }

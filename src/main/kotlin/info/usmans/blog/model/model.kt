@@ -17,7 +17,7 @@ data class BlogItem(
         val body: String? = "",
         var blogSection: String? = "Main",
         val createdOn: String? = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE),
-        val modifiedOn: String? =LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE),
+        val modifiedOn: String? = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE),
         val createDay: String? = LocalDate.now().format(DateTimeFormatter.ofPattern("dd")),
         val createMonth: String? = LocalDate.now().format(DateTimeFormatter.ofPattern("MMM")),
         val createYear: String? = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy")),
@@ -33,37 +33,40 @@ data class Category(val id: Int = 0, val name: String = "")
 data class Message(val message: String = "")
 
 
-
-
-class BlogItemMaps {
+class BlogItemUtil {
 
     //store blog entries per page
-    private val pagedBlogItems: TreeMap<Int, List<BlogItem>> = TreeMap()
+    private val pagedBlogItemIdMap: TreeMap<Long, List<Long>> = TreeMap()
     //store blog entries based on id
     private val blogItemMap: TreeMap<Long, BlogItem> = TreeMap(Collections.reverseOrder())
 
     fun initBlogItemMaps(blogItems: List<BlogItem>) {
         this.blogItemMap.clear()
         this.blogItemMap.putAll(blogItems.associateBy({ it.id }) { it })
-        reInitPagedBlogItems()
+        initPagedBlogItems()
     }
 
-    fun getblogItemMap() = blogItemMap
+    fun getBlogItemIdList() = blogItemMap.keys.toList()
+    fun getBlogItemList() = blogItemMap.values.toList()
 
-    fun getPagedblogItemMap() = pagedBlogItems
+    fun getBlogItemForId(id: Long) = blogItemMap.get(id)
 
-    fun getHighestPage() = pagedBlogItems.lastKey()
+    fun putBlogItemForId(id: Long, blogItem: BlogItem) = blogItemMap.put(id, blogItem)
+
+    fun getNextBlogItemId() = blogItemMap.firstKey() + 1
+
+    fun getBlogItemListForPage(pageNumber: Long): List<BlogItem> = this.pagedBlogItemIdMap.get(pageNumber)?.map { blogItemMap.get(it) ?: BlogItem(id = 0, title = "Not Found") } ?: emptyList()
+
+    fun getHighestPage() = (if(pagedBlogItemIdMap.size == 0) 0L else pagedBlogItemIdMap.lastKey())!!
 
     fun getBlogCount() = blogItemMap.size
 
-    fun reInitPagedBlogItems(){
+    fun initPagedBlogItems() {
         val sortedBlogItemsList = blogItemMap.values.toList().sortedByDescending(BlogItem::id)
-        val blogItemCount = sortedBlogItemsList.size
-        val itemsOnLastPage = blogItemCount % BLOG_ITEMS_PER_PAGE
-        val totalPagesCount = if (itemsOnLastPage == 0) blogItemCount / BLOG_ITEMS_PER_PAGE else blogItemCount / BLOG_ITEMS_PER_PAGE + 1
+        val itemsOnLastPage = sortedBlogItemsList.size % BLOG_ITEMS_PER_PAGE
+        val totalPagesCount = if (itemsOnLastPage == 0) sortedBlogItemsList.size / BLOG_ITEMS_PER_PAGE else sortedBlogItemsList.size / BLOG_ITEMS_PER_PAGE + 1
 
-        val pagedBlogItems = mutableMapOf<Int, List<BlogItem>>()
-
+        val localBlogItemsIdPerPageList = mutableMapOf<Long, List<Long>>()
 
         for (pageNumber in totalPagesCount downTo 1) {
             var endIdx = (pageNumber * BLOG_ITEMS_PER_PAGE)
@@ -72,12 +75,16 @@ class BlogItemMaps {
             if ((pageNumber == totalPagesCount) && (itemsOnLastPage != 0)) {
                 endIdx = startIdx + itemsOnLastPage
             }
-            val pagedList = sortedBlogItemsList.subList(startIdx, endIdx) //sort??
-            pagedBlogItems.put(pageNumber, pagedList)
+            val pagedList: List<Long> = sortedBlogItemsList.subList(startIdx, endIdx).map { it.id }
+            localBlogItemsIdPerPageList.put(pageNumber.toLong(), pagedList)
         }
 
-        this.pagedBlogItems.clear()
-        this.pagedBlogItems.putAll(pagedBlogItems)
+        if (localBlogItemsIdPerPageList.size < this.pagedBlogItemIdMap.size) {
+            //the pages has been decreased (in case of deletion), clear out global map
+            this.pagedBlogItemIdMap.clear()
+        }
+
+        this.pagedBlogItemIdMap.putAll(localBlogItemsIdPerPageList)
     }
 }
 

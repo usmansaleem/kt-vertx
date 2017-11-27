@@ -3,53 +3,36 @@ package info.usmans.blog.vertx
 import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.module.kotlin.readValue
 import info.usmans.blog.model.BlogItem
-import info.usmans.blog.model.BlogItemMaps
+import info.usmans.blog.model.BlogItemUtil
 import info.usmans.blog.model.Category
 import info.usmans.blog.model.Message
 import io.vertx.core.Handler
-import io.vertx.core.Vertx
-import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.HttpHeaders
 import io.vertx.core.json.Json
 import io.vertx.ext.auth.oauth2.AccessToken
 import io.vertx.ext.web.RoutingContext
-import io.vertx.ext.web.client.HttpRequest
-import io.vertx.ext.web.client.WebClient
-import io.vertx.ext.web.client.WebClientOptions
 import io.vertx.ext.web.templ.TemplateEngine
 import java.io.File
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-
-@Deprecated("Use String version")
-fun blogItemListFromJson(dataJson: Buffer): List<BlogItem>? = blogItemListFromJson(dataJson.toString())
 
 fun blogItemListFromJson(dataJson: String): List<BlogItem>? {
-    try {
-        return Json.mapper.readValue(dataJson)
+    return try {
+        Json.mapper.readValue(dataJson)
     } catch (e: JsonParseException) {
         println(e.message)
-        return null
+        null
     }
 }
 
-fun readJsonData(vertx: Vertx, gistTag: String): HttpRequest<Buffer> {
-    val jsonUrl = getDataJsonUrl(gistTag)
-    val options = WebClientOptions().apply { isKeepAlive = false }
-    val client = WebClient.create(vertx, options)
-    println("Reading data.json from $jsonUrl")
-    return client.getAbs(jsonUrl)
-}
+fun highestPageHandler(blogItemUtil: BlogItemUtil) = Handler<RoutingContext> { rc -> rc.response().sendPlain(blogItemUtil.getHighestPage().toString()) }
 
-fun highestPageHandler(blogItem: BlogItemMaps) = Handler<RoutingContext> { rc -> rc.response().sendPlain(blogItem.getHighestPage().toString()) }
+fun blogCountHandler(blogItemMapUtil: BlogItemUtil) = Handler<RoutingContext> { rc -> rc.response().sendPlain(blogItemMapUtil.getBlogCount().toString()) }
 
-fun blogCountHandler(blogItem: BlogItemMaps) = Handler<RoutingContext> { rc -> rc.response().sendPlain(blogItem.getBlogCount().toString()) }
-
-fun pageNumberHandler(blogItem: BlogItemMaps) = Handler<RoutingContext> { rc ->
-    val pageNumber = rc.request().getParam("pageNumber").toIntOrNull() ?: 0
+fun pageNumberHandler(blogItemUtil: BlogItemUtil) = Handler<RoutingContext> { rc ->
+    val pageNumber = rc.request().getParam("pageNumber").toLongOrNull() ?: 0
     if (pageNumber >= 1) {
-        if (blogItem.getPagedblogItemMap().containsKey(pageNumber)) {
-            val pagedBlogItemsList = blogItem.getPagedblogItemMap().get(pageNumber)
+        val pagedBlogItemsList = blogItemUtil.getBlogItemListForPage(pageNumber)
+
+        if (pagedBlogItemsList.isNotEmpty()) {
             rc.response().sendJson(Json.encode(pagedBlogItemsList))
         } else {
             rc.response().endWithErrorJson("Bad Request - Invalid Page Number $pageNumber")
@@ -59,30 +42,32 @@ fun pageNumberHandler(blogItem: BlogItemMaps) = Handler<RoutingContext> { rc ->
     }
 }
 
-fun blogItemsHandler(blogItem: BlogItemMaps) = Handler<RoutingContext> { rc ->
-    rc.response().sendJson(Json.encodePrettily(blogItem.getblogItemMap().values.toList().sortedBy { it.id }))
+fun blogItemsHandler(blogItemUtil: BlogItemUtil) = Handler<RoutingContext> { rc ->
+    rc.response().sendJson(Json.encodePrettily(blogItemUtil.getBlogItemList()))
 }
 
-fun blogItemByIdHandler(blogItem: BlogItemMaps) = Handler<RoutingContext> { rc ->
+fun blogItemByIdHandler(blogItemUtil: BlogItemUtil) = Handler<RoutingContext> { rc ->
     val blogItemId = rc.request().getParam("id").toLongOrNull() ?: 0
-    if (blogItem.getblogItemMap().contains(blogItemId)) {
-        rc.response().sendJson(Json.encodePrettily(blogItem.getblogItemMap().get(blogItemId)))
-    } else {
+    val blogItem = blogItemUtil.getBlogItemForId(blogItemId)
+    if (blogItem == null) {
         rc.response().endWithErrorJson("Bad Request - Invalid Id: $blogItemId")
+    } else {
+        rc.response().sendJson(Json.encode(blogItem))
     }
 }
 
-fun siteMapHandler(blogItem: BlogItemMaps) = Handler<RoutingContext> { rc ->
-    rc.response().putHeader("Content-Type", "text; charset=utf-8").end(blogItem.getblogItemMap().keys.joinToString("\n") {
+fun siteMapHandler(blogItemUtil: BlogItemUtil) = Handler<RoutingContext> { rc ->
+    rc.response().putHeader("Content-Type", "text; charset=utf-8").end(blogItemUtil.getBlogItemIdList().joinToString("\n") {
         "${rc.request().getOAuthRedirectURI("/blog/")}$it"
     })
 }
 
-fun blogByTemplateHandler(blogItem: BlogItemMaps, templateEngine: TemplateEngine) = Handler<RoutingContext> { rc ->
+fun blogByTemplateHandler(blogItemUtil: BlogItemUtil, templateEngine: TemplateEngine) = Handler<RoutingContext> { rc ->
     val blogItemId = rc.request().getParam("id").toLongOrNull() ?: 0
-    if (blogItem.getblogItemMap().containsKey(blogItemId)) {
+    val blogItem = blogItemUtil.getBlogItemForId(blogItemId)
+    if (blogItem != null) {
         //pass blogItem to the template
-        rc.put("blogItem", blogItem.getblogItemMap().get(blogItemId))
+        rc.put("blogItem", blogItem)
         templateEngine.render(rc, "templates", io.vertx.ext.web.impl.Utils.normalizePath("blog.hbs"), { res ->
             if (res.succeeded()) {
                 rc.response().putHeader(HttpHeaders.CONTENT_TYPE, "text/html").end(res.result())
@@ -97,11 +82,8 @@ fun blogByTemplateHandler(blogItem: BlogItemMaps, templateEngine: TemplateEngine
 }
 
 
-fun protectedPageByTemplateHandler(blogItem: BlogItemMaps, templateEngine: TemplateEngine) = Handler<RoutingContext> { rc ->
-    if (blogItem.getblogItemMap().isNotEmpty()) {
-        //pass blogItem to the template
-        rc.put("blogItems", blogItem.getblogItemMap().values)
-    }
+fun protectedPageByTemplateHandler(blogItemList: BlogItemUtil, templateEngine: TemplateEngine) = Handler<RoutingContext> { rc ->
+    rc.put("blogItems", blogItemList.getBlogItemList())
 
     val accessToken: AccessToken? = rc.user() as AccessToken
     rc.put("accessToken", accessToken?.principal()?.encodePrettily())
@@ -117,11 +99,12 @@ fun protectedPageByTemplateHandler(blogItem: BlogItemMaps, templateEngine: Templ
 
 }
 
-fun blogEditGetHandler(blogItem: BlogItemMaps, templateEngine: TemplateEngine) = Handler<RoutingContext> { rc ->
+fun blogEditGetHandler(blogItemUtil: BlogItemUtil, templateEngine: TemplateEngine) = Handler<RoutingContext> { rc ->
     val blogItemId = rc.request().getParam("id").toLongOrNull() ?: 0
-    if (blogItem.getblogItemMap().containsKey(blogItemId)) {
+    val blogItem = blogItemUtil.getBlogItemForId(blogItemId)
+    if (blogItem != null) {
         //pass blogItem to the template
-        rc.put("blogItem", blogItem.getblogItemMap().get(blogItemId))
+        rc.put("blogItem", blogItem)
         templateEngine.render(rc, "templates", io.vertx.ext.web.impl.Utils.normalizePath("protected/blogedit.hbs"), { res ->
             if (res.succeeded()) {
                 rc.response().putHeader(HttpHeaders.CONTENT_TYPE, "text/html").end(res.result())
@@ -135,17 +118,19 @@ fun blogEditGetHandler(blogItem: BlogItemMaps, templateEngine: TemplateEngine) =
     }
 }
 
-fun blogEditPostHandler(blogItem: BlogItemMaps, checkoutDir: File) = Handler<RoutingContext> { rc ->
+fun blogEditPostHandler(blogItemUtil: BlogItemUtil, checkoutDir: File) = Handler<RoutingContext> { rc ->
     val blogItemId = rc.request().getParam("blogId").toLongOrNull() ?: 0
-    val existingBlogItem = blogItem.getblogItemMap().get(blogItemId)
+    val existingBlogItem = blogItemUtil.getBlogItemForId(blogItemId)
     if (existingBlogItem != null) {
-        val modifiedBlogItem = getModifiedBlogItem(rc, existingBlogItem)
+        val modifiedBlogItem = getNewBlogItemFromSubmittedForm(rc, blogItemId).copy(createdOn = existingBlogItem.createdOn,
+                createDay = existingBlogItem.createDay, createMonth = existingBlogItem.createMonth,
+                createYear = existingBlogItem.createYear)
 
-        blogItem.getblogItemMap().put(blogItemId, modifiedBlogItem)
-        blogItem.reInitPagedBlogItems()
+        blogItemUtil.putBlogItemForId(blogItemId, modifiedBlogItem)
+        blogItemUtil.initPagedBlogItems()
 
         //update data.json in local repo
-        File(checkoutDir, "data.json").writeText(Json.encodePrettily(blogItem.getblogItemMap().values.toList().sortedBy { it.id }))
+        File(checkoutDir, "data.json").writeText(Json.encodePrettily(blogItemUtil.getBlogItemList()))
         commitGist(checkoutDir, "Updating blog $blogItemId from jgit")
         pushGist(checkoutDir)
 
@@ -155,8 +140,8 @@ fun blogEditPostHandler(blogItem: BlogItemMaps, checkoutDir: File) = Handler<Rou
     }
 }
 
-fun blogNewGetHandler(blogItem: BlogItemMaps, templateEngine: TemplateEngine) = Handler<RoutingContext> { rc ->
-    rc.put("blogItem", BlogItem( blogItem.getblogItemMap().firstKey() + 1,"url_friendly","Title...","Description...","Body...","Main"))
+fun blogNewGetHandler(blogItemUtil: BlogItemUtil, templateEngine: TemplateEngine) = Handler<RoutingContext> { rc ->
+    rc.put("blogItem", BlogItem(blogItemUtil.getNextBlogItemId(), "url_friendly", "Title...", "Description...", "Body...", "Main"))
     templateEngine.render(rc, "templates", io.vertx.ext.web.impl.Utils.normalizePath("protected/blogedit.hbs"), { res ->
         if (res.succeeded()) {
             rc.response().putHeader(HttpHeaders.CONTENT_TYPE, "text/html").end(res.result())
@@ -166,43 +151,22 @@ fun blogNewGetHandler(blogItem: BlogItemMaps, templateEngine: TemplateEngine) = 
     })
 }
 
-fun blogNewPostHandler(blogItem: BlogItemMaps, checkoutDir: File) = Handler<RoutingContext> { rc ->
-    val blogItemId = blogItem.getblogItemMap().firstKey() + 1
-    val modifiedBlogItem = getNewBlogItem(rc, blogItemId)
+fun blogNewPostHandler(blogItemUtil: BlogItemUtil, checkoutDir: File) = Handler<RoutingContext> { rc ->
+    val blogItemId = blogItemUtil.getNextBlogItemId()
+    val modifiedBlogItem = getNewBlogItemFromSubmittedForm(rc, blogItemId)
 
-    blogItem.getblogItemMap().put(blogItemId, modifiedBlogItem)
-    blogItem.reInitPagedBlogItems()
+    blogItemUtil.putBlogItemForId(blogItemId, modifiedBlogItem)
+    blogItemUtil.initPagedBlogItems()
 
     //update data.json in local repo
-    File(checkoutDir, "data.json").writeText(Json.encodePrettily(blogItem.getblogItemMap().values.toList().sortedBy { it.id }))
+    File(checkoutDir, "data.json").writeText(Json.encodePrettily(blogItemUtil.getBlogItemList()))
     commitGist(checkoutDir, "Updating blog $blogItemId from jgit")
     pushGist(checkoutDir)
 
     rc.response().sendJson(Json.encode(Message("Blog id $blogItemId Successfully created")))
 }
 
-private fun getModifiedBlogItem(rc: RoutingContext, existingBlogItem: BlogItem): BlogItem {
-    //obtain submitted values ...
-    val urlFriendlyId = rc.request().getFormAttribute("urlFriendlyId") ?: existingBlogItem.urlFriendlyId
-    val title = rc.request().getFormAttribute("title") ?: existingBlogItem.title
-    val description = rc.request().getFormAttribute("description") ?: existingBlogItem.description
-    val body = rc.request().getFormAttribute("body") ?: existingBlogItem.body
-    val categories = rc.request().getFormAttribute("categories")
-    val categoryList = if (categories.isNullOrBlank())
-        emptyList<Category>()
-    else
-        categories.split(",").mapIndexed { i, s ->
-            Category(i, s.trim())
-        }
-
-
-    val modifiedOn = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
-
-    val modifiedBlogItem = existingBlogItem.copy(urlFriendlyId = urlFriendlyId, title = title, description = description, body = body, modifiedOn = modifiedOn, categories = categoryList)
-    return modifiedBlogItem
-}
-
-private fun getNewBlogItem(rc: RoutingContext, id: Long): BlogItem {
+private fun getNewBlogItemFromSubmittedForm(rc: RoutingContext, id: Long): BlogItem {
     //obtain submitted values ...
     val urlFriendlyId = rc.request().getFormAttribute("urlFriendlyId")
     val title = rc.request().getFormAttribute("title")
@@ -210,12 +174,12 @@ private fun getNewBlogItem(rc: RoutingContext, id: Long): BlogItem {
     val body = rc.request().getFormAttribute("body")
     val categories = rc.request().getFormAttribute("categories")
     val categoryList = if (categories.isNullOrBlank())
-        emptyList<Category>()
+        emptyList()
     else
         categories.split(",").mapIndexed { i, s ->
             Category(i, s.trim())
         }
 
-    return BlogItem(id=id,urlFriendlyId =  urlFriendlyId, title = title, description = description, body = body, categories = categoryList)
+    return BlogItem(id = id, urlFriendlyId = urlFriendlyId, title = title, description = description, body = body, categories = categoryList)
 }
 

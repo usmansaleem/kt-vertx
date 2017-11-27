@@ -22,7 +22,7 @@ fun commitGist(checkoutDir: File, msg: String = "commit from jgit"): RevCommit {
     //open existing repo and commit and push data.json
     return Git.open(File(checkoutDir, ".git")).use {
         it.add().addFilepattern("data.json").call()
-        it.commit().setMessage(msg).call()
+        it.commit().setAuthor("Usman Saleem", "usman@usmans.info").setMessage(msg).call()
     }
 }
 
