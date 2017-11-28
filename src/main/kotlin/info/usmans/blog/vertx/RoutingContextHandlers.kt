@@ -65,15 +65,7 @@ fun siteMapHandler(blogItemUtil: BlogItemUtil) = Handler<RoutingContext> { rc ->
 
 fun blogByFriendlyUrl(blogItemUtil: BlogItemUtil, templateEngine: TemplateEngine) = Handler<RoutingContext> { rc ->
     val friendlyUrl = rc.request().getParam("url")
-    blogHandlerById(blogItemUtil.getBlogItemForUrl(friendlyUrl), rc, templateEngine)
-}
-
-fun blogByTemplateHandler(blogItemUtil: BlogItemUtil, templateEngine: TemplateEngine) = Handler<RoutingContext> { rc ->
-    val blogItemId = rc.request().getParam("id").toLongOrNull() ?: 0
-    blogHandlerById(blogItemUtil.getBlogItemForId(blogItemId), rc, templateEngine)
-}
-
-private fun blogHandlerById(blogItem: BlogItem?, rc: RoutingContext, templateEngine: TemplateEngine) {
+    val blogItem = blogItemUtil.getBlogItemForUrl(friendlyUrl)
     if (blogItem != null) {
         //pass blogItem to the template
         rc.put("blogItem", blogItem)
@@ -90,6 +82,15 @@ private fun blogHandlerById(blogItem: BlogItem?, rc: RoutingContext, templateEng
     }
 }
 
+fun blogByIdHandler(blogItemUtil: BlogItemUtil, publicHttpsPort:Int = 443 ) = Handler<RoutingContext> { rc ->
+    val blogItemId = rc.request().getParam("id").toLongOrNull() ?: 0
+    val blogItem = blogItemUtil.getBlogItemForId(blogItemId)
+    if(blogItem == null) {
+        rc.response().endWithErrorJson("Invalid Request for Blog")
+    } else {
+        rc.request().redirectToFriendlyUrl(publicHttpsPort = publicHttpsPort, url=blogItem.urlFriendlyId)
+    }
+}
 
 fun protectedPageByTemplateHandler(blogItemList: BlogItemUtil, templateEngine: TemplateEngine) = Handler<RoutingContext> { rc ->
     rc.put("blogItems", blogItemList.getBlogItemList())

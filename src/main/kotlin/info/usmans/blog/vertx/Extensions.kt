@@ -20,6 +20,18 @@ fun HttpServerRequest.redirectToSecure(publicHttpsPort: Int = 443, redirectCode:
     this.response().putHeader("location", url).setStatusCode(redirectCode).end()
 }
 
+fun HttpServerRequest.redirectToFriendlyUrl(publicHttpsPort: Int = 443, redirectCode: Int = 302, url: String) {
+    val hostName: String = if (this.absoluteURI().isNullOrBlank())
+        "usmans.info"
+    else
+        URI(this.absoluteURI()).host ?: "usmans.info"
+
+    val path = "/usmansaleem/blog/$url"
+
+    val location: String = if (publicHttpsPort == 443) "https://${hostName}${path}" else "https://${hostName}:${publicHttpsPort}${path}"
+    this.response().putHeader("location", location).setStatusCode(redirectCode).end()
+}
+
 fun HttpServerRequest.getOAuthRedirectURI(path: String): String {
     val redirectURI = URI(absoluteURI() ?: "https://usmans.info")
     return "https://" + redirectURI.authority + path

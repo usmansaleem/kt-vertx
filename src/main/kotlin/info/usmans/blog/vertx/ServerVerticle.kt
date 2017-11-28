@@ -46,6 +46,7 @@ class ServerVerticle : AbstractVerticle() {
     private val blogItemUtil = BlogItemUtil()
     private val templateEngine = HandlebarsTemplateEngine.create()
     private val checkoutDir = checkoutGist()
+    private val publicSSLPort = System.getProperty("publicSSLPort", "443").toIntOrNull() ?: 443
 
     override fun start(startFuture: Future<Void>?) {
         val loadedBlogItemList = blogItemListFromJson(File(checkoutDir, "data.json").readText())
@@ -72,9 +73,9 @@ class ServerVerticle : AbstractVerticle() {
         //sitemap (for Google)
         get("/sitemap.txt").handler(siteMapHandler(blogItemUtil))
 
+        //forward /blog/id to /usmansaleem/blog/friendlyUrl
+        get("/blog/:id").handler(blogByIdHandler(blogItemUtil, publicSSLPort))
         //Individual Blog Entry from template engine ...
-        get("/blog/:id").handler(blogByTemplateHandler(blogItemUtil, templateEngine))
-
         get("/usmansaleem/blog/:url").handler(blogByFriendlyUrl(blogItemUtil, templateEngine))
 
         secureRoutes()
@@ -133,7 +134,7 @@ class ServerVerticle : AbstractVerticle() {
         val (keyValue, certValue) = Pair(getSSLKeyValue(), getSSLCertValue())
 
         if (keyValue != null && certValue != null) {
-            println("Deploying Http Server (SSL) on port 8443")
+            println("Deploying Http Server (SSL) on port 8443 with public (redirect) SSL Port $publicSSLPort")
             //deploy this verticle with SSL
             vertx.createHttpServer(getSSLOptions(keyValue, certValue, 8443)).apply {
                 requestHandler(router::accept)
@@ -141,9 +142,9 @@ class ServerVerticle : AbstractVerticle() {
                     if (httpServerlistenHandler.succeeded()) {
                         println("Http Server (SSL) on port 8443 deployed.")
                         if (deployUnsecureServer()) {
-                            val redirectSSLPort = System.getProperty("redirectSSLPort", "443").toIntOrNull() ?: 443
-                            println("Deploying Forwarding Verticle on 8080 with redirecting to $redirectSSLPort...")
-                            vertx.deployVerticle(ForwardingServerVerticle(redirectSSLPort), { verticleHandler ->
+
+                            println("Deploying Forwarding Verticle on 8080 with redirecting to $publicSSLPort...")
+                            vertx.deployVerticle(ForwardingServerVerticle(publicSSLPort), { verticleHandler ->
                                 if (verticleHandler.succeeded())
                                     startFuture?.succeeded()
                                 else

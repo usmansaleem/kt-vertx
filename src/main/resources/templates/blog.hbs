@@ -11,32 +11,12 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css"
           integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
 
-    <!-- font awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-
-    <!-- Angular JS -->
-    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.6/angular.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.6/angular-resource.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.6/angular-route.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.6/angular-animate.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.6/angular-sanitize.js"></script>
-
-    <!-- Angular UI Bootstrap-->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/2.5.0/ui-bootstrap-tpls.min.js"></script>
-
-    <!-- AngularJS Head Meta https://github.com/apparentlymart/angularjs-viewhead -->
-    <script language="javascript" type="text/javascript" src="/scripts/angularjs-viewhead.js"></script>
-
-    <!-- Our version of Angular Service -->
-    <script src="/scripts/script.js"></script>
-
     <!-- Custom CSS -->
     <link rel="stylesheet" type="text/css" href="/css/custom.css">
     <link rel="stylesheet" type="text/css" href="/css/bsnavbarfix.css">
 
-
     <!-- Open Graph tags -->
-    <meta property="og:url" content="https://usmans.info/blog/{{blogItem.id}}"/>
+    <meta property="og:url" content="https://usmans.info/usmansaleem/blog/{{blogItem.urlFriendlyId}}"/>
     <meta property="og:type" content="article"/>
     <meta property="og:title" content="{{blogItem.title}}"/>
     <meta property="og:description" content="{{blogItem.description}}"/>
@@ -56,20 +36,18 @@
     js.src = 'https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.11&appId=142645833160332';
     fjs.parentNode.insertBefore(js, fjs);
 }(document, 'script', 'facebook-jssdk'));</script>
-<nav class="navbar fixed-top navbar-expand navbar-light" style="background-color: #daddad;">
+<nav class="navbar fixed-top navbar-expand-lg navbar-light" style="background-color: #daddad;">
     <a class="navbar-brand" href="/#!/">
-        <img style="width:32px;height:32px;" src="/images/usman_profile.jpg" class="d-inline-block align-top"
-             alt="Usman"/>
+        <img style="width:32px;height:32px;" src="/images/usman_profile.jpg" class="d-inline-block align-top" alt="Usman"/>
         Usman's Blog
     </a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
-            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav">
-            <li class="nav-item active">
-                <a class="nav-link" href="/#!/">Home <span class="sr-only">(current)</span></a>
+            <li class="nav-item">
+                <a class="nav-link" href="/#!/">Home</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="/#!/about">About</a>
@@ -122,8 +100,5 @@
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js"
         integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ"
         crossorigin="anonymous"></script>
-<!-- gist embed -->
-<script type="text/javascript"
-        src="https://cdnjs.cloudflare.com/ajax/libs/gist-embed/2.4/gist-embed.min.js"></script>
 </body>
 </html>
