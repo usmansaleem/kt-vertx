@@ -10,43 +10,19 @@ jobs:
 
       - checkout
 
-      - setup_remote_docker
-
       - restore_cache:
           keys:
           - kt-vertx-blog-{{ checksum "build.gradle" }}
-      - restore_cache:
-          keys:
-          - hyper-{{ checksum "installhyper.sh" }}
 
       - run: sh ./gradlew shadowJar
-      - run: bash ./installhyper.sh  
 
       - save_cache:
           paths:
             - ~/.gradle
           key: kt-vertx-blog-{{ checksum "build.gradle" }}
-      - save_cache:
-          paths:
-            - ./hyper
-          key: hyper-{{ checksum "installhyper.sh" }}
 
-      - run: |
-          TAG=$(echo 0.1.$CIRCLE_BUILD_NUM-$CIRCLE_BRANCH | tr / -)
-          NAME=usmans/blog
-          docker login -u $REPO_USER -p $REPO_PASSWORD
-          docker build -t $NAME:$TAG .
-          if [ "${CIRCLE_BRANCH}" == "master" ];
-            then docker tag $NAME:$TAG $NAME:latest;
-          fi
-          docker push $NAME
-      - run: |
-          ./hyper/hyper version
-          if [ "${CIRCLE_BRANCH}" == "master" ]; then
-            ./hyper/hyper rm -f blog
-            ./hyper/hyper rmi usmans/blog:latest
-            ./hyper/hyper run -itd --size=s3 --name=blog -e GITHUB_GIST_TOKEN  -e BLOG_CERT_BASE64 -e BLOG_KEY_BASE64 -e OAUTH_CLIENT_ID -e OAUTH_CLIENT_SECRET -p 80:8080 -p 443:8443 usmans/blog:latest
-            ./hyper/hyper fip attach 199.245.60.88 blog
-            ./hyper/hyper ps -a
-            ./hyper/hyper logs blog
-          fi
+      - add_ssh_keys:
+                fingerprints:
+                  - "1f:75:78:e8:e8:7e:07:75:c9:0e:f7:2b:06:8a:3d:35"
+      - run: scp ./build/libs/uzi-vertx-shadow.jar root@212.47.244.29:./upload/uzi-vertx-shadow.jar
+      - run: ssh root@212.47.244.29 "sh ./redeploy.sh"
