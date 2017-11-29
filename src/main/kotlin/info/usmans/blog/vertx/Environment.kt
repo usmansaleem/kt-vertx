@@ -44,4 +44,4 @@ fun getOAuthClientSecret() = System.getenv("OAUTH_CLIENT_SECRET")
 fun getDataJsonUrl(tag: String): String =
         "https://cdn.rawgit.com/usmansaleem/9bb0e98d05caa0afcc649b6593733edf/raw/$tag/data.json"
 
-fun deployUnsecureServer() = System.getenv("DEPLOY_UNSECURE_SERVER") != null
+

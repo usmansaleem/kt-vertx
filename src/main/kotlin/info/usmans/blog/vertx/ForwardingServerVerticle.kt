@@ -3,15 +3,15 @@ package info.usmans.blog.vertx
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Future
 
-class ForwardingServerVerticle(val redirectSSLPort: Int = 443) : AbstractVerticle() {
+class ForwardingServerVerticle(val deployPort: Int = 80, val publicSSLPort: Int = 443) : AbstractVerticle() {
     override fun start(startFuture: Future<Void>?) {
-        println("Deploying Http Server on port 8080 with redirect to ${redirectSSLPort}")
+        println("Deploying Http Server on port ${deployPort} with redirect to ${publicSSLPort}")
 
         vertx.createHttpServer().apply {
             requestHandler({ request ->
-                request.redirectToSecure(redirectSSLPort)
+                request.redirectToSecure(publicSSLPort)
             })
-            listen(8080, {handler ->
+            listen(deployPort, {handler ->
                 if(handler.succeeded()) {
                     startFuture?.complete()
                 } else {

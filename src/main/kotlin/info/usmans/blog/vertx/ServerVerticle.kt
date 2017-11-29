@@ -20,15 +20,7 @@ import io.vertx.ext.web.templ.HandlebarsTemplateEngine
 import java.io.File
 
 /**
- * Server Verticle - Launching Http and Https server on port 8080 and 8443.
- *
- * To launch secure server on port 8443, following environment variables are required
- * BLOG_CERT_BASE64 - PEM Certificate further encoded in BASE64 with wrap 0
- * BLOG_KEY_BASE64 - RSA Private Key (non-encryoted) further encoded in BASE64 with wrap 0
- *
- * To configure protected routes, following environment variables are required
- * OAUTH_CLIENT_ID
- * OAUTH_CLIENT_SECRET
+ * Server Verticle - Launching Https server on 443 (and optionally unsecure server on 80).
  *
  */
 
@@ -46,7 +38,11 @@ class ServerVerticle : AbstractVerticle() {
     private val blogItemUtil = BlogItemUtil()
     private val templateEngine = HandlebarsTemplateEngine.create()
     private val checkoutDir = checkoutGist()
+    
     private val publicSSLPort = System.getProperty("publicSSLPort", "443").toIntOrNull() ?: 443
+    private val deploySSLPort = System.getProperty("deploySSLPort", "443").toIntOrNull() ?: 443
+    private val deployPort = System.getProperty("deployPort", "80").toIntOrNull() ?: 80
+    private val deployUnSecureServer = System.getenv("DEPLOY_UNSECURE_SERVER") != null
 
     override fun start(startFuture: Future<Void>?) {
         val loadedBlogItemList = blogItemListFromJson(File(checkoutDir, "data.json").readText())
@@ -134,17 +130,16 @@ class ServerVerticle : AbstractVerticle() {
         val (keyValue, certValue) = Pair(getSSLKeyValue(), getSSLCertValue())
 
         if (keyValue != null && certValue != null) {
-            println("Deploying Http Server (SSL) on port 8443 with public (redirect) SSL Port $publicSSLPort")
+            println("Deploying Http Server (SSL) on port $deploySSLPort")
             //deploy this verticle with SSL
-            vertx.createHttpServer(getSSLOptions(keyValue, certValue, 8443)).apply {
+            vertx.createHttpServer(getSSLOptions(keyValue, certValue, deploySSLPort)).apply {
                 requestHandler(router::accept)
                 listen({ httpServerlistenHandler ->
                     if (httpServerlistenHandler.succeeded()) {
-                        println("Http Server (SSL) on port 8443 deployed.")
-                        if (deployUnsecureServer()) {
-
+                        println("Http Server (SSL) on port $deploySSLPort deployed.")
+                        if (deployUnSecureServer) {
                             println("Deploying Forwarding Verticle on 8080 with redirecting to $publicSSLPort...")
-                            vertx.deployVerticle(ForwardingServerVerticle(publicSSLPort), { verticleHandler ->
+                            vertx.deployVerticle(ForwardingServerVerticle(deployPort, publicSSLPort), { verticleHandler ->
                                 if (verticleHandler.succeeded())
                                     startFuture?.succeeded()
                                 else
@@ -157,11 +152,11 @@ class ServerVerticle : AbstractVerticle() {
                 })
             }
         } else {
-            println("Deploying Http Server on port 8080")
+            println("Deploying Http Server on port $deployPort")
             //deploy non secure server
             vertx.createHttpServer().apply {
                 requestHandler(router::accept)
-                listen(8080, { handler ->
+                listen(deployPort, { handler ->
                     if (handler.succeeded()) {
                         startFuture?.complete()
                     } else {
@@ -173,7 +168,7 @@ class ServerVerticle : AbstractVerticle() {
     }
 
 
-    private fun getSSLOptions(blogKeyValue: String, blogCertValue: String, sslPort: Int = 8443): HttpServerOptions {
+    private fun getSSLOptions(blogKeyValue: String, blogCertValue: String, sslPort: Int): HttpServerOptions {
         return HttpServerOptions().apply {
             isSsl = true
             pemKeyCertOptions = PemKeyCertOptions().apply {
