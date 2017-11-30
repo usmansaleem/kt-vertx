@@ -30,6 +30,9 @@
     <link rel="stylesheet" type="text/css" href="/css/custom.css">
     <link rel="stylesheet" type="text/css" href="/css/bsnavbarfix.css">
 
+    <!-- Iconic Bootstrap Font css -->
+    <link href="/css/open-iconic-bootstrap.min.css" rel="stylesheet">
+
     <!-- fixed meta tags -->
     <meta property="og:url" content="https://usmans.info"/>
     <meta property="og:title" content="Usman Saleem - Blog"/>
@@ -42,7 +45,7 @@
 
 <body>
 <nav class="navbar fixed-top navbar-expand-lg navbar-light" style="background-color: #daddad;">
-    <a class="navbar-brand" href="#!/">
+    <a class="navbar-brand" href="/#!/">
         <img style="width:32px;height:32px;" src="/images/usman_profile.jpg" class="d-inline-block align-top"
              alt="Usman"/>
         Usman's Blog
@@ -53,22 +56,21 @@
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav mr-auto">
-            <li class="nav-item active">
-                <a class="nav-link" href="#!/">Home <span class="sr-only">(current)</span></a>
+            <li class="nav-item" ng-class="{'active': pageClass == 'page-home'}">
+                <a class="nav-link" href="/#!/"><span class="oi oi-home" title="home" aria-hidden="true"></span> Home</a>
             </li>
-            <li class="nav-item">
-                <a class="nav-link" href="#!/about">About</a>
+            <li class="nav-item"  ng-class="{'active': pageClass == 'page-about'}">
+                <a class="nav-link" href="/#!/about"><span class="oi oi-info" title="info" aria-hidden="true"></span> About</a>
             </li>
         </ul>
 
         <form id="cse-search-box-form-id" class="form-inline" onsubmit="return executeSearchQuery();">
-            <input id="cse-search-input-box-id" class="form-control mr-sm-2" type="search" placeholder="Google Custom Search" aria-label="Search">
+            <input id="cse-search-input-box-id" class="form-control mr-1" type="search" placeholder="Google Custom Search" aria-label="Search">
             <script async type="text/javascript"
                     src="//cse.google.com/cse/brand?form=cse-search-box-form-id&inputbox=cse-search-input-box-id">
             </script>
-            <button class="btn btn-outline-dark my-2 my-sm-0 btn-sm" type="submit">Search</button>
+            <button class="btn btn-light oi oi-magnifying-glass" type="submit"></button>
         </form>
-
     </div>
 </nav>
 
