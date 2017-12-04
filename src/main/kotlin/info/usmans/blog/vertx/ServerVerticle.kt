@@ -153,8 +153,9 @@ class ServerVerticle : AbstractVerticle() {
 
             post("/protected/blog/new").blockingHandler(blogNewPostHandler(blogItemUtil, checkoutDir))
 
-            get("/protected/hometest").handler({
+            get("/protected/hometest").handler({ rc ->
                 vertx.eventBus().publish("action-feed", "You got message")
+                rc.response().sendPlain("Message published")
             })
         }
     }
