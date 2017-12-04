@@ -13,11 +13,16 @@ import io.vertx.core.net.PemKeyCertOptions
 import io.vertx.ext.auth.oauth2.OAuth2Auth
 import io.vertx.ext.auth.oauth2.OAuth2ClientOptions
 import io.vertx.ext.auth.oauth2.OAuth2FlowType
+import io.vertx.ext.bridge.BridgeEventType
+import io.vertx.ext.bridge.PermittedOptions
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.handler.*
+import io.vertx.ext.web.handler.sockjs.BridgeOptions
+import io.vertx.ext.web.handler.sockjs.SockJSHandler
 import io.vertx.ext.web.sstore.LocalSessionStore
 import io.vertx.ext.web.templ.HandlebarsTemplateEngine
 import java.io.File
+import java.time.LocalDateTime
 
 /**
  * Server Verticle - Launching Https server on 443 (and optionally unsecure server on 80).
@@ -76,8 +81,32 @@ class ServerVerticle : AbstractVerticle() {
 
         secureRoutes()
 
+        websocketRoute()
+
         //static pages
         route("/*").handler(StaticHandler.create()) //serve static contents from webroot folder on classpath
+    }
+
+    private fun Router.websocketRoute() {
+        //websocket for home automation (TODO: Basic Authentication)
+        val bridgeOptions = BridgeOptions().addOutboundPermitted(PermittedOptions().setAddress("action-feed"))
+        route("/eventbus/*").handler(SockJSHandler.create(vertx).bridge(bridgeOptions, { event ->
+            // You can also optionally provide a handler like this which will be passed any events that occur on the bridge
+            // You can use this for monitoring or logging, or to change the raw messages in-flight.
+            // It can also be used for fine grained access control.
+
+            if (event.type() === BridgeEventType.SOCKET_CREATED) {
+                println("""${LocalDateTime.now().toString()}A client socket was created""")
+            }
+
+            if (event.type() === BridgeEventType.SOCKET_CLOSED) {
+                println("""${LocalDateTime.now().toString()}A client socket was closed""")
+            }
+
+            // This signals that it's ok to process the event
+            event.complete(true)
+
+        }))
     }
 
     private fun Router.secureRoutes() {
@@ -123,6 +152,10 @@ class ServerVerticle : AbstractVerticle() {
             get("/protected/blog/new").handler(blogNewGetHandler(blogItemUtil, templateEngine))
 
             post("/protected/blog/new").blockingHandler(blogNewPostHandler(blogItemUtil, checkoutDir))
+
+            get("/protected/hometest").handler({
+                vertx.eventBus().publish("action-feed", "You got message")
+            })
         }
     }
 
