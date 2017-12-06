@@ -1,6 +1,8 @@
 package info.usmans.blog.vertx
 
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
+import java.io.File
+import java.io.FileNotFoundException
 import java.nio.charset.StandardCharsets
 import java.util.*
 
@@ -16,6 +18,17 @@ fun gitCredentialProvider(gistToken: String = System.getenv("GITHUB_GIST_TOKEN")
  * We are expecting Base64 single line encoded of PEM certificates
  */
 fun getSSLCertValue(): String? {
+    val filePath = System.getenv("BLOG_CERT_PATH")
+    if (filePath != null) {
+        //attempt to read contents from file
+        try {
+            return File(filePath).readText()
+        } catch (e: FileNotFoundException) {
+            println("$filePath not found. Continuing with env")
+        }
+    }
+
+    //attempt to read base64 encoded value ...
     val certValueEncoded: String? = System.getenv("BLOG_CERT_BASE64")
     return if (certValueEncoded != null) try {
         Base64.getDecoder().decode(certValueEncoded).toString(StandardCharsets.UTF_8)
@@ -27,6 +40,15 @@ fun getSSLCertValue(): String? {
 }
 
 fun getSSLKeyValue(): String? {
+    val filePath = System.getenv("BLOG_KEY_PATH")
+    if (filePath != null) {
+        //attempt to read contents from file
+        try {
+            return File(filePath).readText()
+        } catch (e: FileNotFoundException) {
+            println("$filePath not found. Continuing with env")
+        }
+    }
     val keyValueEncoded: String? = System.getenv("BLOG_KEY_BASE64")
     return if (keyValueEncoded != null) try {
         Base64.getDecoder().decode(keyValueEncoded).toString(StandardCharsets.UTF_8)
