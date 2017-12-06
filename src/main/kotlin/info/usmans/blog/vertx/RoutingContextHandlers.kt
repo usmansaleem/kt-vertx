@@ -88,7 +88,7 @@ fun blogByIdHandler(blogItemUtil: BlogItemUtil, publicHttpsPort:Int = 443 ) = Ha
     if(blogItem == null) {
         rc.response().endWithErrorJson("Invalid Request for Blog")
     } else {
-        rc.request().redirectToFriendlyUrl(publicHttpsPort = publicHttpsPort, url=blogItem.urlFriendlyId)
+        rc.request().redirectToFriendlyUrl(redirectSSLPort = publicHttpsPort, url=blogItem.urlFriendlyId)
     }
 }
 

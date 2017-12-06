@@ -54,7 +54,7 @@ If both http (8080) and https (8443) servers are required, following environment
     DEPLOY_UNSECURE_SERVER
     
 All the traffic to http (port 8080) will be redirected to https (to port 443 by default, 
-unless publicSSLPort system property is specified). The publicSSLPort can be used in development to forward requests
+unless redirectSSLPort system property is specified). The redirectSSLPort can be used in development to forward requests
 to 8443 instead of default 443.
 
 **Docker build**

@@ -4,8 +4,10 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import info.usmans.blog.handler.Auth0AuthHandler
 import info.usmans.blog.model.BlogItemUtil
 import io.vertx.core.AbstractVerticle
+import io.vertx.core.CompositeFuture
 import io.vertx.core.Future
 import io.vertx.core.buffer.Buffer
+import io.vertx.core.http.HttpServer
 import io.vertx.core.http.HttpServerOptions
 import io.vertx.core.json.Json
 import io.vertx.core.net.OpenSSLEngineOptions
@@ -43,11 +45,25 @@ class ServerVerticle : AbstractVerticle() {
     private val blogItemUtil = BlogItemUtil()
     private val templateEngine = HandlebarsTemplateEngine.create()
     private val checkoutDir = checkoutGist()
-    
-    private val publicSSLPort = System.getProperty("publicSSLPort", "443").toIntOrNull() ?: 443
+
+    /**
+     * Redirect SSL Port where redirection happens. For example the server can be deployed on 8443, but it is behind a nginx or similar
+     * reverse proxy, hence any redirection should go to 443 instead of 8443.
+     *
+     * If redirection to same port is required, set both publisSSLPort and deploySSLPort to same value.
+     */
+    private val redirectSSLPort = System.getProperty("redirectSSLPort", "443").toIntOrNull() ?: 443
     private val deploySSLPort = System.getProperty("deploySSLPort", "443").toIntOrNull() ?: 443
+
+    /**
+     * Controls deployment of unsecured http server (with redirect to secured one)
+     */
+    private val deployHttp = System.getenv("BLOG_DEPLOY_HTTP")
     private val deployPort = System.getProperty("deployPort", "80").toIntOrNull() ?: 80
-    private val deployUnSecureServer = System.getenv("DEPLOY_UNSECURE_SERVER") != null
+
+    private val sslKeyValue = getSSLKeyValue()
+    private val sslCertValue = getSSLCertValue()
+
 
     override fun start(startFuture: Future<Void>?) {
         val loadedBlogItemList = blogItemListFromJson(File(checkoutDir, "data.json").readText())
@@ -56,7 +72,34 @@ class ServerVerticle : AbstractVerticle() {
         } else {
             blogItemUtil.initBlogItemMaps(loadedBlogItemList)
             val router = createRouter()
-            createHttpServers(router, startFuture)
+
+            //create futures for async cordination
+            val httpsServerFuture: Future<HttpServer> = Future.future()
+            val httpServerVerticleFuture: Future<String> = Future.future()
+            val netServerVerticleFuture: Future<String> = Future.future()
+
+            //create http server
+            createSecuredHttpServers(router, httpsServerFuture)
+
+            //optionally deploy http verticle
+            if(deployHttp != null) {
+                vertx.deployVerticle(HttpServerVerticleWithForwardToSecure(deployPort, redirectSSLPort), httpServerVerticleFuture.completer())
+            } else {
+                httpServerVerticleFuture.complete()
+            }
+
+            //deploy the net server verticle
+            vertx.deployVerticle(NetServerVerticle(sslCertValue, sslKeyValue), netServerVerticleFuture.completer())
+
+            //wait for all of our services and verticles to start up before declaring this verticle as a success ...
+            CompositeFuture.join(httpsServerFuture, httpServerVerticleFuture, netServerVerticleFuture).setHandler({ event ->
+                if(event.succeeded()) {
+                    println("All services and verticles have been deployed")
+                    startFuture?.complete()
+                } else {
+                    startFuture?.fail(event.cause())
+                }
+            })
         }
     }
 
@@ -75,38 +118,14 @@ class ServerVerticle : AbstractVerticle() {
         get("/sitemap.txt").handler(siteMapHandler(blogItemUtil))
 
         //forward /blog/id to /usmansaleem/blog/friendlyUrl
-        get("/blog/:id").handler(blogByIdHandler(blogItemUtil, publicSSLPort))
+        get("/blog/:id").handler(blogByIdHandler(blogItemUtil, redirectSSLPort))
         //Individual Blog Entry from template engine ...
         get("/usmansaleem/blog/:url").handler(blogByFriendlyUrl(blogItemUtil, templateEngine))
 
         secureRoutes()
 
-        websocketRoute()
-
         //static pages
         route("/*").handler(StaticHandler.create()) //serve static contents from webroot folder on classpath
-    }
-
-    private fun Router.websocketRoute() {
-        //websocket for home automation (TODO: Basic Authentication)
-        val bridgeOptions = BridgeOptions().addOutboundPermitted(PermittedOptions().setAddress("action-feed"))
-        route("/eventbus/*").handler(SockJSHandler.create(vertx).bridge(bridgeOptions, { event ->
-            // You can also optionally provide a handler like this which will be passed any events that occur on the bridge
-            // You can use this for monitoring or logging, or to change the raw messages in-flight.
-            // It can also be used for fine grained access control.
-
-            if (event.type() === BridgeEventType.SOCKET_CREATED) {
-                println("""${LocalDateTime.now().toString()}A client socket was created""")
-            }
-
-            if (event.type() === BridgeEventType.SOCKET_CLOSED) {
-                println("""${LocalDateTime.now().toString()}A client socket was closed""")
-            }
-
-            // This signals that it's ok to process the event
-            event.complete(true)
-
-        }))
     }
 
     private fun Router.secureRoutes() {
@@ -153,51 +172,23 @@ class ServerVerticle : AbstractVerticle() {
 
             post("/protected/blog/new").blockingHandler(blogNewPostHandler(blogItemUtil, checkoutDir))
 
-            get("/protected/hometest").handler({ rc ->
+            get("/protected/sendmessage").handler({ rc ->
                 vertx.eventBus().publish("action-feed", "You got message")
                 rc.response().sendPlain("Message published")
             })
         }
     }
 
-    private fun createHttpServers(router: Router, startFuture: Future<Void>?) {
-        val (keyValue, certValue) = Pair(getSSLKeyValue(), getSSLCertValue())
-
-        if (keyValue != null && certValue != null) {
+    private fun createSecuredHttpServers(router: Router, httpServerFuture: Future<HttpServer>) {
+        if (sslKeyValue != null && sslCertValue != null) {
             println("Deploying Http Server (SSL) on port $deploySSLPort")
             //deploy this verticle with SSL
-            vertx.createHttpServer(getSSLOptions(keyValue, certValue, deploySSLPort)).apply {
+            vertx.createHttpServer(getSSLOptions(sslKeyValue, sslCertValue, deploySSLPort)).apply {
                 requestHandler(router::accept)
-                listen({ httpServerlistenHandler ->
-                    if (httpServerlistenHandler.succeeded()) {
-                        println("Http Server (SSL) on port $deploySSLPort deployed.")
-                        if (deployUnSecureServer) {
-                            println("Deploying Forwarding Verticle on 8080 with redirecting to $publicSSLPort...")
-                            vertx.deployVerticle(ForwardingServerVerticle(deployPort, publicSSLPort), { verticleHandler ->
-                                if (verticleHandler.succeeded())
-                                    startFuture?.succeeded()
-                                else
-                                    startFuture?.fail(verticleHandler.cause())
-                            })
-                        }
-                    } else
-                        startFuture?.fail(httpServerlistenHandler.cause())
-
-                })
+                listen(httpServerFuture.completer())
             }
         } else {
-            println("Deploying Http Server on port $deployPort")
-            //deploy non secure server
-            vertx.createHttpServer().apply {
-                requestHandler(router::accept)
-                listen(deployPort, { handler ->
-                    if (handler.succeeded()) {
-                        startFuture?.complete()
-                    } else {
-                        startFuture?.fail(handler.cause())
-                    }
-                })
-            }
+            httpServerFuture.fail("SSL Key or Value cannot be determined.")
         }
     }
 

@@ -5,7 +5,7 @@ import io.vertx.core.http.HttpServerResponse
 import io.vertx.core.json.Json
 import java.net.URI
 
-fun HttpServerRequest.redirectToSecure(publicHttpsPort: Int = 443, redirectCode: Int = 302) {
+fun HttpServerRequest.redirectToSecure(redirectSSLPort: Int = 443, redirectCode: Int = 302) {
     val hostName: String = if (this.absoluteURI().isNullOrBlank())
         "usmans.info"
     else
@@ -16,11 +16,11 @@ fun HttpServerRequest.redirectToSecure(publicHttpsPort: Int = 443, redirectCode:
     else
         URI(this.absoluteURI()).path ?: ""
 
-    val url: String = if (publicHttpsPort == 443) "https://${hostName}${path}" else "https://${hostName}:${publicHttpsPort}${path}"
+    val url: String = if (redirectSSLPort == 443) "https://${hostName}${path}" else "https://${hostName}:${redirectSSLPort}${path}"
     this.response().putHeader("location", url).setStatusCode(redirectCode).end()
 }
 
-fun HttpServerRequest.redirectToFriendlyUrl(publicHttpsPort: Int = 443, redirectCode: Int = 302, url: String) {
+fun HttpServerRequest.redirectToFriendlyUrl(redirectSSLPort: Int = 443, redirectCode: Int = 302, url: String) {
     val hostName: String = if (this.absoluteURI().isNullOrBlank())
         "usmans.info"
     else
@@ -28,7 +28,7 @@ fun HttpServerRequest.redirectToFriendlyUrl(publicHttpsPort: Int = 443, redirect
 
     val path = "/usmansaleem/blog/$url"
 
-    val location: String = if (publicHttpsPort == 443) "https://${hostName}${path}" else "https://${hostName}:${publicHttpsPort}${path}"
+    val location: String = if (redirectSSLPort == 443) "https://${hostName}${path}" else "https://${hostName}:${redirectSSLPort}${path}"
     this.response().putHeader("location", location).setStatusCode(redirectCode).end()
 }
 
