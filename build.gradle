@@ -1,9 +1,14 @@
 buildscript {
     ext.vertx_version = '3.5.0'
+    ext.netty_tcnative_boringssl_static_version = '2.0.6.Final'
+    ext.jackson_module_kotlin_version = '2.9.0'
+    ext.jgit_version = '4.9.0.201710071750-r'
+    ext.slf4j_version= '1.7.+'
+    ext.logback_version = '1.2.+'
 }
 
 plugins {
-    id "org.jetbrains.kotlin.jvm" version "1.1.60"
+    id "org.jetbrains.kotlin.jvm" version "1.1.61"
     id 'application'
     id 'java'
     id 'com.github.johnrengelman.shadow' version '2.0.1'
@@ -21,26 +26,30 @@ repositories {
 }
 
 dependencies {
+    //kotlin dependencies
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jre8"
+    compile "org.jetbrains.kotlin:kotlin-runtime"
+    compile "org.jetbrains.kotlin:kotlin-reflect"
+    //jackson module for kotlin
+    compile "com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_module_kotlin_version"
+
+    //slf4j/logback logging
+    compile "org.slf4j:slf4j-api:$slf4j_version"
+    compile "ch.qos.logback:logback-classic:$logback_version"
+
     //vertx dependencies
     compile "io.vertx:vertx-core:$vertx_version"
     compile "io.vertx:vertx-web:$vertx_version"
     compile "io.vertx:vertx-web-client:$vertx_version"
     compile "io.vertx:vertx-auth-oauth2:$vertx_version"
-    compile "io.netty:netty-tcnative-boringssl-static:2.0.6.Final"
     compile "io.vertx:vertx-web-templ-handlebars:$vertx_version"
-
-    //kotlin dependencies
-    compile "org.jetbrains.kotlin:kotlin-stdlib-jre8"
-    compile "org.jetbrains.kotlin:kotlin-runtime"
-    compile "org.jetbrains.kotlin:kotlin-reflect"
-
-    //jackson module for kotlin
-    compile "com.fasterxml.jackson.module:jackson-module-kotlin:2.9.0"
+    //to utilize vertx openssl integration. May not work in arm environment
+    compile "io.netty:netty-tcnative-boringssl-static:$netty_tcnative_boringssl_static_version"
 
     //jgit - core library
-    compile "org.eclipse.jgit:org.eclipse.jgit:4.9.0.201710071750-r"
+    compile "org.eclipse.jgit:org.eclipse.jgit:$jgit_version"
 
-    //not used at the moment ...
+    //test dependencies
     testCompile "org.jetbrains.kotlin:kotlin-test"
     testCompile "org.jetbrains.kotlin:kotlin-test-junit"
 }
@@ -64,6 +73,7 @@ shadowJar {
     }
     mergeServiceFiles {
         include 'META-INF/services/io.vertx.core.spi.VerticleFactory'
+        include 'META-INF/services/ch.qos.logback.classic.spi.Configurator'
     }
 }
 

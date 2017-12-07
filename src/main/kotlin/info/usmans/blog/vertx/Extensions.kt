@@ -5,35 +5,33 @@ import io.vertx.core.http.HttpServerResponse
 import io.vertx.core.json.Json
 import java.net.URI
 
-fun HttpServerRequest.redirectToSecure(redirectSSLPort: Int = 443, redirectCode: Int = 302) {
+fun HttpServerRequest.redirectToSecure(friendlyUrl: String? = null) {
     val hostName: String = if (this.absoluteURI().isNullOrBlank())
-        "usmans.info"
+        SYS_BLOG_FALLBACK_REDIRECT_HOST
     else
-        URI(this.absoluteURI()).host ?: "usmans.info"
+        URI(this.absoluteURI()).host ?: SYS_BLOG_FALLBACK_REDIRECT_HOST
 
-    val path: String = if (this.absoluteURI().isNullOrBlank())
+    val path = if(friendlyUrl == null) {
+        //determine path from incoming request
+        if (this.absoluteURI().isNullOrBlank())
         ""
-    else
+        else
         URI(this.absoluteURI()).path ?: ""
+    } else {
+        "/usmansaleem/blog/$friendlyUrl"
+    }
 
-    val url: String = if (redirectSSLPort == 443) "https://${hostName}${path}" else "https://${hostName}:${redirectSSLPort}${path}"
-    this.response().putHeader("location", url).setStatusCode(redirectCode).end()
-}
+//    val path: String = if (this.absoluteURI().isNullOrBlank())
+//        ""
+//    else
+//        URI(this.absoluteURI()).path ?: ""
 
-fun HttpServerRequest.redirectToFriendlyUrl(redirectSSLPort: Int = 443, redirectCode: Int = 302, url: String) {
-    val hostName: String = if (this.absoluteURI().isNullOrBlank())
-        "usmans.info"
-    else
-        URI(this.absoluteURI()).host ?: "usmans.info"
-
-    val path = "/usmansaleem/blog/$url"
-
-    val location: String = if (redirectSSLPort == 443) "https://${hostName}${path}" else "https://${hostName}:${redirectSSLPort}${path}"
-    this.response().putHeader("location", location).setStatusCode(redirectCode).end()
+    val url: String = if (SYS_REDIRECT_SSL_PORT == 443) "https://${hostName}${path}" else "https://${hostName}:${SYS_REDIRECT_SSL_PORT}${path}"
+    this.response().putHeader("location", url).setStatusCode(302).end()
 }
 
 fun HttpServerRequest.getOAuthRedirectURI(path: String): String {
-    val redirectURI = URI(absoluteURI() ?: "https://usmans.info")
+    val redirectURI = URI(absoluteURI() ?: "https://${SYS_BLOG_FALLBACK_REDIRECT_HOST}")
     return "https://" + redirectURI.authority + path
 }
 

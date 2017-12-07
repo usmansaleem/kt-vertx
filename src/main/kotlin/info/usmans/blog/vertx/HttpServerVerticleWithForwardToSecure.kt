@@ -2,23 +2,26 @@ package info.usmans.blog.vertx
 
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Future
+import org.slf4j.LoggerFactory
 
-class HttpServerVerticleWithForwardToSecure(val deployPort: Int = 80, val redirectSSLPort: Int = 443) : AbstractVerticle() {
+class HttpServerVerticleWithForwardToSecure : AbstractVerticle() {
+    private val logger = LoggerFactory.getLogger("info.usmans.blog.vertx.HttpServerVerticleWithForwardToSecure")
+
     override fun start(startFuture: Future<Void>?) {
-        println("Deploying Http Server on port ${deployPort} with redirect to ${redirectSSLPort}")
+        logger.info("Deploying Http Server on port {} with redirect to {}", SYS_DEPLOY_PORT, SYS_REDIRECT_SSL_PORT)
 
-        vertx.createHttpServer().apply {
-            requestHandler({ request ->
-                request.redirectToSecure(redirectSSLPort)
-            })
-            listen(deployPort, {handler ->
-                if(handler.succeeded()) {
-                    startFuture?.complete()
-                } else {
-                    startFuture?.fail(handler.cause())
-                }
-            })
-        }
+        val httpServer = vertx.createHttpServer()
 
+        httpServer.requestHandler({ request ->
+            request.redirectToSecure()
+        })
+
+        httpServer.listen(SYS_DEPLOY_PORT, {handler ->
+            if(handler.succeeded()) {
+                startFuture?.complete()
+            } else {
+                startFuture?.fail(handler.cause())
+            }
+        })
     }
 }

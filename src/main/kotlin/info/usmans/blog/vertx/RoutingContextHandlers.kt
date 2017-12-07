@@ -82,13 +82,13 @@ fun blogByFriendlyUrl(blogItemUtil: BlogItemUtil, templateEngine: TemplateEngine
     }
 }
 
-fun blogByIdHandler(blogItemUtil: BlogItemUtil, publicHttpsPort:Int = 443 ) = Handler<RoutingContext> { rc ->
+fun redirectToFriendlyUrlHandler(blogItemUtil: BlogItemUtil) = Handler<RoutingContext> { rc ->
     val blogItemId = rc.request().getParam("id").toLongOrNull() ?: 0
     val blogItem = blogItemUtil.getBlogItemForId(blogItemId)
     if(blogItem == null) {
         rc.response().endWithErrorJson("Invalid Request for Blog")
     } else {
-        rc.request().redirectToFriendlyUrl(redirectSSLPort = publicHttpsPort, url=blogItem.urlFriendlyId)
+        rc.request().redirectToSecure(blogItem.urlFriendlyId)
     }
 }
 

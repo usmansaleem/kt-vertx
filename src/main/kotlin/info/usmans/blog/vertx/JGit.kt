@@ -13,7 +13,6 @@ fun checkoutGist(gistUrl: String = GIST_REPO_URL): File {
             setURI(gistUrl).
             setDirectory(tmpDir).
             call().use {
-        println("Git cloned at: $tmpDir")
     }
     return tmpDir
 }
@@ -40,7 +39,7 @@ fun gitPushStatus(checkoutDir: File) {
     }
 }
 
-fun pushGist(checkoutDir: File, credentialProvider: UsernamePasswordCredentialsProvider = gitCredentialProvider()) {
+fun pushGist(checkoutDir: File, credentialProvider: UsernamePasswordCredentialsProvider = UsernamePasswordCredentialsProvider(ENV_GITHUB_GIST_TOKEN, "")) {
     //open existing repo and commit and push data.json
     Git.open(File(checkoutDir, ".git")).use {
         it.push().setCredentialsProvider(credentialProvider).call()

@@ -1,69 +1,90 @@
 package info.usmans.blog.vertx
 
-import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
+import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.FileNotFoundException
 import java.nio.charset.StandardCharsets
 import java.util.*
 
-internal const val OAUTH_SITE = "https://uzi.au.auth0.com"
-internal const val OAUTH_TOKEN_PATH = "/oauth/token"
-internal const val OAUTH_AUTHZ_PATH = "/authorize"
-internal const val OAUTH_USERINFO_PATH = "/userinfo"
-internal const val GIST_REPO_URL = "https://gist.github.com/9bb0e98d05caa0afcc649b6593733edf.git"
+private val envLogger = LoggerFactory.getLogger("info.usmans.blog.Environment")
 
-fun gitCredentialProvider(gistToken: String = System.getenv("GITHUB_GIST_TOKEN")) = UsernamePasswordCredentialsProvider(gistToken, "")
+//environment variables used throughout this module
+
+internal val ENV_BLOG_CERT_PATH = System.getenv("BLOG_CERT_PATH")
+internal val ENV_BLOG_KEY_PATH = System.getenv("BLOG_KEY_PATH")
+internal val ENV_CERT_BASE64 = System.getenv("BLOG_CERT_BASE64")
+internal val ENV_BLOG_KEY_BASE64 = System.getenv("BLOG_KEY_BASE64")
+internal val ENV_OAUTH_CLIENT_ID = System.getenv("OAUTH_CLIENT_ID")
+internal val ENV_OAUTH_CLIENT_SECRET = System.getenv("OAUTH_CLIENT_SECRET")
+internal val ENV_GITHUB_GIST_TOKEN = System.getenv("GITHUB_GIST_TOKEN")
+internal val ENV_BLOG_DEPLOY_HTTP = System.getenv("BLOG_DEPLOY_HTTP")
+internal val ENV_NET_SERVER_CLIENT_PASSWORD = System.getenv("NET_SERVER_CLIENT_PASSWORD")
+
+//system properties used throughout this module
+internal val SYS_BLOG_FALLBACK_REDIRECT_HOST = System.getProperty("fallbackRedirectDefaultHost") ?: "usmans.info"
+internal val SYS_REDIRECT_SSL_PORT = System.getProperty("redirectSSLPort", "443").toIntOrNull() ?: 443
+internal val SYS_DEPLOY_SSL_PORT = System.getProperty("deploySSLPort", "443").toIntOrNull() ?: 443
+internal val SYS_DEPLOY_PORT = System.getProperty("deployPort", "80").toIntOrNull() ?: 80
 
 /**
- * We are expecting Base64 single line encoded of PEM certificates
+ * Read PEM encoded SSL Certificate from path defined by BLOG_CERT_PATH environment variable. If BLOG_CERT_PATH is not
+ * defined, read the contents of the certificate from BLOG_CERT_BASE64 which are base64 encoded without line breaks.
+ *
+ * Returns null if unable to read/decode the contents.
+ *
+ * Note: BLOG_CERT_BASE64 is a workaround for some docker hosting environment which cannot read multi-line environment
+ * variables
  */
-fun getSSLCertValue(): String? {
-    val filePath = System.getenv("BLOG_CERT_PATH")
+internal fun getSSLCertValue(): String? {
+    val filePath = ENV_BLOG_CERT_PATH
     if (filePath != null) {
         //attempt to read contents from file
         try {
             return File(filePath).readText()
         } catch (e: FileNotFoundException) {
-            println("$filePath not found. Continuing with env")
+            envLogger.debug("Cert not found, continue with value of BLOG_CERT_BASE64")
         }
     }
 
     //attempt to read base64 encoded value ...
-    val certValueEncoded: String? = System.getenv("BLOG_CERT_BASE64")
+    val certValueEncoded = ENV_CERT_BASE64
     return if (certValueEncoded != null) try {
         Base64.getDecoder().decode(certValueEncoded).toString(StandardCharsets.UTF_8)
     } catch (e: IllegalArgumentException) {
+        envLogger.debug("Issues when decoding ENV_CERT_BASE64")
         null
     }
     else
         null
 }
 
-fun getSSLKeyValue(): String? {
-    val filePath = System.getenv("BLOG_KEY_PATH")
+/**
+ * Returns PEM encoded SSL Private Key from path defined by BLOG_KEY_PATH environment variable. If BLOG_KEY_PATH is not
+ * defined, read the contents of the certificate from BLOG_KEY_BASE64 which are base64 encoded without line breaks.
+ *
+ * Returns null if unable to read/decode the contents.
+ *
+ * Note: BLOG_KEY_BASE64 is a workaround for some docker hosting environment which cannot read multi-line environment
+ * variables
+ */
+internal fun getSSLKeyValue(): String? {
+    val filePath = ENV_BLOG_KEY_PATH
     if (filePath != null) {
         //attempt to read contents from file
         try {
             return File(filePath).readText()
         } catch (e: FileNotFoundException) {
-            println("$filePath not found. Continuing with env")
+            envLogger.debug("Private key not found, continue with value of BLOG_KEY_BASE64")
         }
     }
-    val keyValueEncoded: String? = System.getenv("BLOG_KEY_BASE64")
+    val keyValueEncoded = ENV_BLOG_KEY_BASE64
     return if (keyValueEncoded != null) try {
         Base64.getDecoder().decode(keyValueEncoded).toString(StandardCharsets.UTF_8)
     } catch (e: IllegalArgumentException) {
+        envLogger.debug("Issues when decoding ENV_BLOG_KEY_BASE64")
         null
     }
     else
         null
 }
-
-fun getOAuthClientId() = System.getenv("OAUTH_CLIENT_ID")
-
-fun getOAuthClientSecret() = System.getenv("OAUTH_CLIENT_SECRET")
-
-fun getDataJsonUrl(tag: String): String =
-        "https://cdn.rawgit.com/usmansaleem/9bb0e98d05caa0afcc649b6593733edf/raw/$tag/data.json"
-
 
