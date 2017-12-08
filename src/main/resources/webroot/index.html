@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" ng-app="blogApp">
+<html lang="en">
 <head>
     <!-- Required meta tags -->
     <meta charset="utf-8">
@@ -10,6 +10,13 @@
 
     <!-- inline our custom styles -->
     <style>
+        /**
+        https://docs.angularjs.org/api/ng/directive/ngCloak
+        */
+        [ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
+            display: none !important;
+        }
+
        /*
           Bootstrap navbar fix http://getbootstrap.com/components/#navbar-fixed-top
         */
@@ -37,19 +44,6 @@
     <!-- Iconic Bootstrap Font css -->
     <link href="/css/open-iconic-bootstrap.min.css" rel="stylesheet">
 
-
-    <!-- Angular JS -->
-    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.6/angular.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.6/angular-resource.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.6/angular-route.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.6/angular-sanitize.min.js"></script>
-
-    <!-- Our version of Angular Service -->
-    <script src="/scripts/script.min.js"></script>
-
-    <!-- Iconic Bootstrap Font css -->
-    <link href="/css/open-iconic-bootstrap.min.css" rel="stylesheet">
-
     <!-- fixed meta tags -->
     <meta property="og:url" content="https://usmans.info"/>
     <meta property="og:title" content="Usman Saleem - Blog"/>
@@ -60,10 +54,10 @@
     <meta property="og:type" content="blog"/>
 </head>
 
-<body>
+<body ng-app="blogApp">
 <nav class="navbar fixed-top navbar-expand-lg navbar-light" style="background-color: #daddad;">
     <a class="navbar-brand" href="/#!/">
-        <img src="/images/usman_profile_32.jpg" class="d-inline-block align-top"
+        <img width="32" height="32" src="/images/usman_profile_32.jpg" class="d-inline-block align-top"
              alt="Usman"/>
         Usman's Blog
     </a>
@@ -91,7 +85,7 @@
     </div>
 </nav>
 
-<div class="page {{ pageClass }}" ng-view></div>
+<div class="page {{ pageClass }}" ng-cloak ng-view></div>
 
 <div>
     <script>
@@ -122,6 +116,15 @@
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js"
         integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ"
         crossorigin="anonymous"></script>
+
+<!-- Angular JS -->
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.6/angular.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.6/angular-resource.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.6/angular-route.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.6/angular-sanitize.min.js"></script>
+
+<!-- Our version of Angular Service -->
+<script src="/scripts/script.min.js"></script>
 
 <!-- Google Custom Search - Custom Java Script -->
 <script>
