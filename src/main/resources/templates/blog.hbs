@@ -7,13 +7,79 @@
 
     <title>{{blogItem.title}}</title>
 
+    <!-- inline our custom styles -->
+    <style>
+        /*
+           Bootstrap navbar fix http://getbootstrap.com/components/#navbar-fixed-top
+         */
+
+        /* fix fixed-bar */
+        body { padding-top: 50px; }
+        @media screen and (max-width: 768px) {
+            body { padding-top: 50px; }
+        }
+
+        /* fix fixed-bar jumping to in-page anchor issue */
+        *[id]:before {
+            display: block;
+            content: " ";
+            margin-top: -75px;
+            height: 75px;
+            visibility: hidden;
+        }
+
+        /**
+            Date CSS taken from http://www.wplover.com/1449/easier-date-display-technique-with-css-3/
+         */
+        .date {
+            position: relative;
+            width: 70px;
+            font-family: Georgia, serif;
+            color: #999;
+            margin: 0 auto;
+        }
+
+        .day, .month, .year {
+            position: absolute;
+        }
+
+        .day {
+            font-size: 30px;
+            top: 15px;
+        }
+
+        .month {
+            top: 0;
+            left: 0;
+            font-size: 18px;
+        }
+
+        .year {
+            top: 19px;
+            right: 0;
+            font-size: 19px;
+            rotation: -90deg !important;
+            /* ** Hacks ** */
+            -webkit-transform: rotate(-90deg);
+            -moz-transform: rotate(-90deg);
+        }
+
+        /* Other custom stuff */
+
+        .fb-left {
+            float: left;
+        }
+
+        .last-modified {
+            float: right;
+            font-style: italic;
+            font-size: x-small;
+        }
+    </style>
+
     <!-- Bootstrap 4 CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css"
           integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
-
-    <!-- Custom CSS -->
-    <link rel="stylesheet" type="text/css" href="/css/custom.css">
-    <link rel="stylesheet" type="text/css" href="/css/bsnavbarfix.css">
 
     <!-- Iconic Bootstrap Font css -->
     <link href="/css/open-iconic-bootstrap.min.css" rel="stylesheet">
@@ -127,6 +193,7 @@
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js"
         integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ"
         crossorigin="anonymous"></script>
+<!-- Google Custom Search - Custom Java Script -->
 <script>
     function executeSearchQuery() {
         var input = document.getElementById('cse-search-input-box-id');

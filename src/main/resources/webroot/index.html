@@ -6,29 +6,46 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
     <base href="/">
-    <title ng-bind-template="{{viewTitle}} - Usman Saleem - Blog">Usman Saleem - Blog</title>
+    <title>Usman Saleem - Blog</title>
+
+    <!-- inline our custom styles -->
+    <style>
+       /*
+          Bootstrap navbar fix http://getbootstrap.com/components/#navbar-fixed-top
+        */
+
+        /* fix fixed-bar */
+        body { padding-top: 50px; }
+        @media screen and (max-width: 768px) {
+            body { padding-top: 50px; }
+        }
+
+        /* fix fixed-bar jumping to in-page anchor issue */
+        *[id]:before {
+            display: block;
+            content: " ";
+            margin-top: -75px;
+            height: 75px;
+            visibility: hidden;
+        }
+    </style>
 
     <!-- Bootstrap 4 CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css"
           integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
 
+    <!-- Iconic Bootstrap Font css -->
+    <link href="/css/open-iconic-bootstrap.min.css" rel="stylesheet">
+
+
     <!-- Angular JS -->
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.6/angular.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.6/angular-resource.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.6/angular-route.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.6/angular-animate.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.6/angular-sanitize.js"></script>
-
-    <!-- AngularJS Head Meta https://github.com/apparentlymart/angularjs-viewhead -->
-    <script language="javascript" type="text/javascript" src="/scripts/angularjs-viewhead.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.6/angular-route.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.6/angular-sanitize.min.js"></script>
 
     <!-- Our version of Angular Service -->
-    <script src="/scripts/script.js"></script>
-
-
-    <!-- Custom CSS -->
-    <link rel="stylesheet" type="text/css" href="/css/custom.css">
-    <link rel="stylesheet" type="text/css" href="/css/bsnavbarfix.css">
+    <script src="/scripts/script.min.js"></script>
 
     <!-- Iconic Bootstrap Font css -->
     <link href="/css/open-iconic-bootstrap.min.css" rel="stylesheet">
@@ -106,6 +123,7 @@
         integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ"
         crossorigin="anonymous"></script>
 
+<!-- Google Custom Search - Custom Java Script -->
 <script>
     function executeSearchQuery() {
         var input = document.getElementById('cse-search-input-box-id');

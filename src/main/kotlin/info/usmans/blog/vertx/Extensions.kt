@@ -1,5 +1,6 @@
 package info.usmans.blog.vertx
 
+import io.vertx.core.http.HttpHeaders
 import io.vertx.core.http.HttpServerRequest
 import io.vertx.core.http.HttpServerResponse
 import io.vertx.core.json.Json
@@ -39,14 +40,25 @@ fun HttpServerRequest.getOAuthRedirectURI(path: String): String {
  * Extension to the HTTP response to output JSON objects.
  */
 fun HttpServerResponse.sendJson(json: String) {
-    this.putHeader("Content-Type", "application/json; charset=utf-8").end(json)
+    this.apply {
+        putHeader(HttpHeaders.CONTENT_TYPE, "application/json; charset=utf-8")
+        end(json)
+    }
+}
+
+fun HttpServerResponse.sendJsonWithCacheControl(json: String) {
+    this.apply {
+        putHeader(HttpHeaders.CONTENT_TYPE, "application/json; charset=utf-8")
+        putHeader(HttpHeaders.CACHE_CONTROL, "max-age=1800, must-revalidate")
+        end(json)
+    }
 }
 
 /**
  * Extension to the HTTP response to output plain text.
  */
 fun HttpServerResponse.sendPlain(plain: String) {
-    this.putHeader("Content-Type", "text/plain; charset=utf-8").end(plain)
+    this.putHeader(HttpHeaders.CONTENT_TYPE, "text/plain; charset=utf-8").end(plain)
 }
 
 fun HttpServerResponse.endWithErrorJson(msg: String) {

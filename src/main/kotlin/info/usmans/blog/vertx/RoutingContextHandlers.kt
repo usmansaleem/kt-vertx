@@ -24,17 +24,17 @@ fun blogItemListFromJson(dataJson: String): List<BlogItem>? {
     }
 }
 
-fun highestPageHandler(blogItemUtil: BlogItemUtil) = Handler<RoutingContext> { rc -> rc.response().sendPlain(blogItemUtil.getHighestPage().toString()) }
+fun highestPageHandlerGet(blogItemUtil: BlogItemUtil) = Handler<RoutingContext> { rc -> rc.response().sendPlain(blogItemUtil.getHighestPage().toString()) }
 
-fun blogCountHandler(blogItemMapUtil: BlogItemUtil) = Handler<RoutingContext> { rc -> rc.response().sendPlain(blogItemMapUtil.getBlogCount().toString()) }
+fun blogCountHandlerGet(blogItemMapUtil: BlogItemUtil) = Handler<RoutingContext> { rc -> rc.response().sendPlain(blogItemMapUtil.getBlogCount().toString()) }
 
-fun pageNumberHandler(blogItemUtil: BlogItemUtil) = Handler<RoutingContext> { rc ->
+fun pageNumberHandlerGet(blogItemUtil: BlogItemUtil) = Handler<RoutingContext> { rc ->
     val pageNumber = rc.request().getParam("pageNumber").toLongOrNull() ?: 0
     if (pageNumber >= 1) {
         val pagedBlogItemsList = blogItemUtil.getBlogItemListForPage(pageNumber)
 
         if (pagedBlogItemsList.isNotEmpty()) {
-            rc.response().sendJson(Json.encode(pagedBlogItemsList))
+            rc.response().sendJsonWithCacheControl(Json.encode(pagedBlogItemsList))
         } else {
             rc.response().endWithErrorJson("Bad Request - Invalid Page Number $pageNumber")
         }
@@ -43,27 +43,27 @@ fun pageNumberHandler(blogItemUtil: BlogItemUtil) = Handler<RoutingContext> { rc
     }
 }
 
-fun blogItemsHandler(blogItemUtil: BlogItemUtil) = Handler<RoutingContext> { rc ->
-    rc.response().sendJson(Json.encodePrettily(blogItemUtil.getBlogItemList()))
+fun blogItemsHandlerGet(blogItemUtil: BlogItemUtil) = Handler<RoutingContext> { rc ->
+    rc.response().sendJsonWithCacheControl(Json.encodePrettily(blogItemUtil.getBlogItemList()))
 }
 
-fun blogItemByIdHandler(blogItemUtil: BlogItemUtil) = Handler<RoutingContext> { rc ->
+fun blogItemByIdHandlerGet(blogItemUtil: BlogItemUtil) = Handler<RoutingContext> { rc ->
     val blogItemId = rc.request().getParam("id").toLongOrNull() ?: 0
     val blogItem = blogItemUtil.getBlogItemForId(blogItemId)
     if (blogItem == null) {
         rc.response().endWithErrorJson("Bad Request - Invalid Id: $blogItemId")
     } else {
-        rc.response().sendJson(Json.encode(blogItem))
+        rc.response().sendJsonWithCacheControl(Json.encode(blogItem))
     }
 }
 
-fun siteMapHandler(blogItemUtil: BlogItemUtil) = Handler<RoutingContext> { rc ->
+fun siteMapHandlerGet(blogItemUtil: BlogItemUtil) = Handler<RoutingContext> { rc ->
     rc.response().putHeader("Content-Type", "text; charset=utf-8").end(blogItemUtil.getBlogItemUrlList().joinToString("\n") {
         "${rc.request().getOAuthRedirectURI("/usmansaleem/blog/")}$it"
     })
 }
 
-fun blogByFriendlyUrl(blogItemUtil: BlogItemUtil, templateEngine: TemplateEngine) = Handler<RoutingContext> { rc ->
+fun blogByFriendlyUrlGet(blogItemUtil: BlogItemUtil, templateEngine: TemplateEngine) = Handler<RoutingContext> { rc ->
     val friendlyUrl = rc.request().getParam("url")
     val blogItem = blogItemUtil.getBlogItemForUrl(friendlyUrl)
     if (blogItem != null) {
@@ -71,7 +71,11 @@ fun blogByFriendlyUrl(blogItemUtil: BlogItemUtil, templateEngine: TemplateEngine
         rc.put("blogItem", blogItem)
         templateEngine.render(rc, "templates", Utils.normalizePath("blog.hbs"), { res ->
             if (res.succeeded()) {
-                rc.response().putHeader(HttpHeaders.CONTENT_TYPE, "text/html").end(res.result())
+                rc.response().apply {
+                    putHeader(HttpHeaders.CONTENT_TYPE, "text/html")
+                    putHeader(HttpHeaders.CACHE_CONTROL, "max-age=1800, must-revalidate")
+                    end(res.result())
+                }
             } else {
                 rc.fail(res.cause())
             }
@@ -82,7 +86,7 @@ fun blogByFriendlyUrl(blogItemUtil: BlogItemUtil, templateEngine: TemplateEngine
     }
 }
 
-fun redirectToFriendlyUrlHandler(blogItemUtil: BlogItemUtil) = Handler<RoutingContext> { rc ->
+fun redirectToFriendlyUrlHandlerGet(blogItemUtil: BlogItemUtil) = Handler<RoutingContext> { rc ->
     val blogItemId = rc.request().getParam("id").toLongOrNull() ?: 0
     val blogItem = blogItemUtil.getBlogItemForId(blogItemId)
     if(blogItem == null) {
@@ -92,7 +96,7 @@ fun redirectToFriendlyUrlHandler(blogItemUtil: BlogItemUtil) = Handler<RoutingCo
     }
 }
 
-fun protectedPageByTemplateHandler(blogItemList: BlogItemUtil, templateEngine: TemplateEngine) = Handler<RoutingContext> { rc ->
+fun protectedPageByTemplateHandlerGet(blogItemList: BlogItemUtil, templateEngine: TemplateEngine) = Handler<RoutingContext> { rc ->
     rc.put("blogItems", blogItemList.getBlogItemList())
 
     val accessToken: AccessToken? = rc.user() as AccessToken
@@ -109,7 +113,7 @@ fun protectedPageByTemplateHandler(blogItemList: BlogItemUtil, templateEngine: T
 
 }
 
-fun blogEditGetHandler(blogItemUtil: BlogItemUtil, templateEngine: TemplateEngine) = Handler<RoutingContext> { rc ->
+fun blogEditHandlerGet(blogItemUtil: BlogItemUtil, templateEngine: TemplateEngine) = Handler<RoutingContext> { rc ->
     val blogItemId = rc.request().getParam("id").toLongOrNull() ?: 0
     val blogItem = blogItemUtil.getBlogItemForId(blogItemId)
     if (blogItem != null) {
@@ -128,7 +132,7 @@ fun blogEditGetHandler(blogItemUtil: BlogItemUtil, templateEngine: TemplateEngin
     }
 }
 
-fun blogEditPostHandler(blogItemUtil: BlogItemUtil, checkoutDir: File) = Handler<RoutingContext> { rc ->
+fun blogEditHandlerPost(blogItemUtil: BlogItemUtil, checkoutDir: File) = Handler<RoutingContext> { rc ->
     val blogItemId = rc.request().getParam("blogId").toLongOrNull() ?: 0
     val existingBlogItem = blogItemUtil.getBlogItemForId(blogItemId)
     if (existingBlogItem != null) {

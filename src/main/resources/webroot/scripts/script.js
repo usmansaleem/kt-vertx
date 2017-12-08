@@ -1,10 +1,10 @@
 // script.js
 
 // create the module and name it blogApp
-var blogApp = angular.module('blogApp', ['ngRoute','ngAnimate', 'ngSanitize', 'viewhead']);
+var blogApp = angular.module('blogApp', ['ngRoute','ngSanitize']);
 
 //ng-routes
-blogApp.config(function($routeProvider) {
+blogApp.config(['$routeProvider',function($routeProvider) {
         $routeProvider
 
             // route for the home page
@@ -23,11 +23,11 @@ blogApp.config(function($routeProvider) {
                            redirectTo: '/'
                         });
 
-    });
+    }]);
 
 
 // create the controller and inject Angular's $scope
-blogApp.controller('mainCtrl', function($scope, $http, $log, $sce) {
+blogApp.controller('mainCtrl', ['$scope', '$http', '$log', '$sce',function($scope, $http, $log, $sce) {
     $scope.trustBlogHtml = function(html) {
               return $sce.trustAsHtml(html);
             };
@@ -77,9 +77,9 @@ blogApp.controller('mainCtrl', function($scope, $http, $log, $sce) {
     //call method chain ...
     $scope.getHighestPage();
     
-});
+}]);
 
 // create the controller and inject Angular's $scope
-blogApp.controller('aboutCtrl', function($scope) {
+blogApp.controller('aboutCtrl', ['$scope',function($scope) {
     $scope.pageClass = 'page-about';
-});
+}]);

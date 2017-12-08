@@ -98,19 +98,19 @@ class ServerVerticle : AbstractVerticle() {
         route().handler(FaviconHandler.create()) //serve favicon.ico from classpath
 
         //REST API routes
-        get("/rest/blog/highestPage").handler(highestPageHandler(blogItemUtil))
-        get("/rest/blog/blogCount").handler(blogCountHandler(blogItemUtil))
-        get("/rest/blog/blogItems/:pageNumber").handler(pageNumberHandler(blogItemUtil))
-        get("/rest/blog/blogItems").handler(blogItemsHandler(blogItemUtil))
-        get("/rest/blog/blogItems/blogItem/:id").handler(blogItemByIdHandler(blogItemUtil))
+        get("/rest/blog/highestPage").handler(highestPageHandlerGet(blogItemUtil))
+        get("/rest/blog/blogCount").handler(blogCountHandlerGet(blogItemUtil))
+        get("/rest/blog/blogItems/:pageNumber").handler(pageNumberHandlerGet(blogItemUtil))
+        get("/rest/blog/blogItems").handler(blogItemsHandlerGet(blogItemUtil))
+        get("/rest/blog/blogItems/blogItem/:id").handler(blogItemByIdHandlerGet(blogItemUtil))
 
         //sitemap (for Google)
-        get("/sitemap.txt").handler(siteMapHandler(blogItemUtil))
+        get("/sitemap.txt").handler(siteMapHandlerGet(blogItemUtil))
 
         //forward /blog/id to /usmansaleem/blog/friendlyUrl
-        get("/blog/:id").handler(redirectToFriendlyUrlHandler(blogItemUtil))
+        get("/blog/:id").handler(redirectToFriendlyUrlHandlerGet(blogItemUtil))
         //Individual Blog Entry from template engine ...
-        get("/usmansaleem/blog/:url").handler(blogByFriendlyUrl(blogItemUtil, templateEngine))
+        get("/usmansaleem/blog/:url").handler(blogByFriendlyUrlGet(blogItemUtil, templateEngine))
 
         secureRoutes()
 
@@ -153,11 +153,11 @@ class ServerVerticle : AbstractVerticle() {
                             .addAuthority("openid profile email")
             )
 
-            get("/protected").handler(protectedPageByTemplateHandler(blogItemUtil, templateEngine))
+            get("/protected").handler(protectedPageByTemplateHandlerGet(blogItemUtil, templateEngine))
 
-            get("/protected/blog/edit/:id").handler(blogEditGetHandler(blogItemUtil, templateEngine))
+            get("/protected/blog/edit/:id").handler(blogEditHandlerGet(blogItemUtil, templateEngine))
 
-            post("/protected/blog/edit/:blogId").blockingHandler(blogEditPostHandler(blogItemUtil, checkoutDir))
+            post("/protected/blog/edit/:blogId").blockingHandler(blogEditHandlerPost(blogItemUtil, checkoutDir))
 
             get("/protected/blog/new").handler(blogNewGetHandler(blogItemUtil, templateEngine))
 
