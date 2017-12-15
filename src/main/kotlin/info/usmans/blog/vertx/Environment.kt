@@ -18,7 +18,7 @@ internal val ENV_OAUTH_CLIENT_ID = System.getenv("OAUTH_CLIENT_ID")
 internal val ENV_OAUTH_CLIENT_SECRET = System.getenv("OAUTH_CLIENT_SECRET")
 internal val ENV_GITHUB_GIST_TOKEN = System.getenv("GITHUB_GIST_TOKEN")
 internal val ENV_BLOG_DEPLOY_HTTP = System.getenv("BLOG_DEPLOY_HTTP")
-internal val ENV_NET_SERVER_CLIENT_PASSWORD = System.getenv("NET_SERVER_CLIENT_PASSWORD")
+internal val ENV_BLOG_CUSTOM_NET_PASSWORD = System.getenv("BLOG_CUSTOM_NET_PASSWORD")
 
 //system properties used throughout this module
 internal val SYS_BLOG_FALLBACK_REDIRECT_HOST = System.getProperty("fallbackRedirectDefaultHost") ?: "usmans.info"

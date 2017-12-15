@@ -41,20 +41,18 @@ class NetServerVerticle(val sslCertValue: String?, val sslKeyValue: String?) : A
                 //test whether client has been added to map or not.
                 if (socket.writeHandlerID() != clientsMap.get("client")) {
                     //close this client ...
-                    logger.debug("No message received from client in 5 seconds, closing socket. ${socket.writeHandlerID()}")
-                    socket.write("No password received. Good bye!")
+                    logger.info("No message received from client in 5 seconds, closing socket. ${socket.writeHandlerID()}")
                     socket.close()
                 }
             })
 
             //we only want one authenticated client to be connected
             if (clientsMap.containsKey("client")) {
-                logger.debug("A client is already connected, closing client socket")
+                logger.info("A client is already connected, closing client socket")
 
                 vertx.cancelTimer(timerId)
 
                 //close client socket
-                socket.write("You are not the first one")
                 socket.close()
             } else {
                 socket.handler({ buffer ->
@@ -62,14 +60,13 @@ class NetServerVerticle(val sslCertValue: String?, val sslKeyValue: String?) : A
                     vertx.cancelTimer(timerId)
 
                     //we want to add the client once we receive secret password from it
-                    if (ENV_NET_SERVER_CLIENT_PASSWORD != null && buffer.toString() == ENV_NET_SERVER_CLIENT_PASSWORD) {
+                    if (ENV_BLOG_CUSTOM_NET_PASSWORD != null && buffer.toString() == ENV_BLOG_CUSTOM_NET_PASSWORD) {
                         logger.info("Client connected, adding to map ${socket.writeHandlerID()}")
                         clientsMap.put("client", socket.writeHandlerID())
 
                         //we are good to send messages now.
                     } else {
-                        logger.debug("Invalid password received, closing socket")
-                        socket.write("Invalid password")
+                        logger.info("Invalid password $buffer received, closing socket")
                         socket.close()
                     }
                 })
