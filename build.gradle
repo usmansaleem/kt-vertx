@@ -1,80 +1,57 @@
-buildscript {
-    ext.vertx_version = '3.5.0'
-    ext.netty_tcnative_boringssl_static_version = '2.0.6.Final'
-    ext.jackson_module_kotlin_version = '2.9.0'
-    ext.jgit_version = '4.9.0.201710071750-r'
-    ext.slf4j_version= '1.7.25'
-    ext.logback_version = '1.2.3'
-}
-
 plugins {
-    id "org.jetbrains.kotlin.jvm" version "1.2.0"
-    id 'application'
-    id 'java'
-    id 'com.github.johnrengelman.shadow' version '2.0.1'
+    id 'io.vertx.vertx-plugin' version "0.0.6"
+    id "org.jetbrains.kotlin.jvm" version "1.2.10"
 }
-
-sourceCompatibility = '1.8'
-version = '1.0.0'
-
-mainClassName = 'io.vertx.core.Launcher'
-def mainVerticleName = 'info.usmans.blog.vertx.ServerVerticle'
 
 repositories {
     jcenter()
-    mavenCentral()
+    //mavenCentral()
 }
 
 dependencies {
     //kotlin dependencies
     compile "org.jetbrains.kotlin:kotlin-stdlib-jre8"
-    compile "org.jetbrains.kotlin:kotlin-runtime"
-    compile "org.jetbrains.kotlin:kotlin-reflect"
-    //jackson module for kotlin
-    compile "com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_module_kotlin_version"
+    compile "org.jetbrains.kotlin:kotlin-reflect" //suggested by jackson-module-kotlin to include explicitly
 
     //slf4j/logback logging
-    compile "org.slf4j:slf4j-api:$slf4j_version"
-    compile "ch.qos.logback:logback-classic:$logback_version"
+    compile "ch.qos.logback:logback-classic:1.2.3"
+
+
+    //jackson module for kotlin
+    compile "com.fasterxml.jackson.module:jackson-module-kotlin:2.9.0"
 
     //vertx dependencies
-    compile "io.vertx:vertx-core:$vertx_version"
-    compile "io.vertx:vertx-web:$vertx_version"
-    compile "io.vertx:vertx-web-client:$vertx_version"
-    compile "io.vertx:vertx-auth-oauth2:$vertx_version"
-    compile "io.vertx:vertx-web-templ-handlebars:$vertx_version"
+    compile 'io.vertx:vertx-lang-kotlin'
+    compile "io.vertx:vertx-web"
+    compile "io.vertx:vertx-web-client"
+    compile "io.vertx:vertx-auth-oauth2"
+    compile "io.vertx:vertx-web-templ-handlebars"
     //to utilize vertx openssl integration. May not work in arm environment
-    compile "io.netty:netty-tcnative-boringssl-static:$netty_tcnative_boringssl_static_version"
+    compile "io.netty:netty-tcnative-boringssl-static:2.0.6.Final"
 
     //jgit - core library
-    compile "org.eclipse.jgit:org.eclipse.jgit:$jgit_version"
+    compile "org.eclipse.jgit:org.eclipse.jgit:4.9.0.201710071750-r"
 
     //test dependencies
     testCompile "org.jetbrains.kotlin:kotlin-test"
     testCompile "org.jetbrains.kotlin:kotlin-test-junit"
 }
 
-compileKotlin {
-    kotlinOptions.jvmTarget = 1.8
+//by default Kotlin targets 1.6
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
 }
 
-compileTestKotlin {
-    kotlinOptions.jvmTarget = 1.8
+vertx {
+    mainVerticle = "info.usmans.blog.vertx.ServerVerticle"
 }
 
-// Naming and packaging settings for the "shadow jar".
+// Override basename and version for our fat jar. The classifier cannot be overridden because of vertx-plugin
 shadowJar {
     baseName = 'uzi-vertx'
-    classifier = 'shadow'
     version=null
-
-    manifest {
-        attributes 'Main-Verticle': mainVerticleName
-    }
-    mergeServiceFiles {
-        include 'META-INF/services/io.vertx.core.spi.VerticleFactory'
-        include 'META-INF/services/ch.qos.logback.classic.spi.Configurator'
-    }
 }
 
 task wrapper(type: Wrapper) {

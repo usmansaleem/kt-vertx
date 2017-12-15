@@ -14,7 +14,7 @@ jobs:
           keys:
           - kt-vertx-blog-{{ checksum "build.gradle" }}
 
-      - run: sh ./gradlew shadowJar
+      - run: sh ./gradlew clean shadowJar
 
       - save_cache:
           paths:
@@ -25,5 +25,5 @@ jobs:
                 fingerprints:
                   - "1f:75:78:e8:e8:7e:07:75:c9:0e:f7:2b:06:8a:3d:35"
       - run: ssh-keyscan 212.47.244.29 >> ~/.ssh/known_hosts
-      - run: scp ./build/libs/uzi-vertx-shadow.jar root@212.47.244.29:./upload/uzi-vertx-shadow.jar
-      - run: ssh root@212.47.244.29 "sh ./redeploy.sh"
+      - run: scp ./build/libs/uzi-vertx-fat.jar root@212.47.244.29:./upload/
+      - run: ssh -t root@212.47.244.29 "cd ./vertx-blog-scripts; sh  ./redeploy.sh"
