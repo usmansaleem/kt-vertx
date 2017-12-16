@@ -64,3 +64,7 @@ fun HttpServerResponse.sendPlain(plain: String) {
 fun HttpServerResponse.endWithErrorJson(msg: String) {
     this.setStatusCode(400).sendJson(Json.encode(msg))
 }
+
+fun HttpServerResponse.endWithErrorPlain(msg: String) {
+    this.setStatusCode(400).sendPlain(msg)
+}

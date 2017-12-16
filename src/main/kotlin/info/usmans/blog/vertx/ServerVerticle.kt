@@ -9,6 +9,7 @@ import io.vertx.core.Future
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.HttpServer
 import io.vertx.core.http.HttpServerOptions
+import io.vertx.core.json.DecodeException
 import io.vertx.core.json.Json
 import io.vertx.core.net.OpenSSLEngineOptions
 import io.vertx.core.net.PemKeyCertOptions
@@ -113,6 +114,9 @@ class ServerVerticle : AbstractVerticle() {
         get("/usmansaleem/blog/:url").handler(blogByFriendlyUrlGet(blogItemUtil, templateEngine))
 
         secureRoutes()
+
+        //home automation
+        post("/ifttt/webhook").handler(iftttWebHookPostHandler(vertx))
 
         //static pages
         route("/*").handler(StaticHandler.create()) //serve static contents from webroot folder on classpath

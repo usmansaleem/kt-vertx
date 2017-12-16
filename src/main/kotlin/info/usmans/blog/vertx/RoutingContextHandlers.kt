@@ -7,7 +7,9 @@ import info.usmans.blog.model.BlogItemUtil
 import info.usmans.blog.model.Category
 import info.usmans.blog.model.Message
 import io.vertx.core.Handler
+import io.vertx.core.Vertx
 import io.vertx.core.http.HttpHeaders
+import io.vertx.core.json.DecodeException
 import io.vertx.core.json.Json
 import io.vertx.ext.auth.oauth2.AccessToken
 import io.vertx.ext.web.RoutingContext
@@ -178,6 +180,27 @@ fun blogNewPostHandler(blogItemUtil: BlogItemUtil, checkoutDir: File) = Handler<
     pushGist(checkoutDir)
 
     rc.response().sendJson(Json.encode(Message("Blog id $blogItemId Successfully created")))
+}
+
+fun iftttWebHookPostHandler(vertx: Vertx) = Handler<RoutingContext> { rc ->
+    try {
+        val body = rc.bodyAsJson
+        if(body != null) {
+            val challenge = body.getString("challenge")
+            if(challenge != null && ENV_BLOG_CUSTOM_NET_PASSWORD == challenge) {
+                val action = body.getString("action") //not used at the moment
+                //success code
+                vertx.eventBus().publish("action-feed", action ?: "Got Action from ifttt")
+                rc.response().sendPlain("ok")
+            } else {
+                rc.response().endWithErrorPlain("Invalid Challenge")
+            }
+        } else {
+            rc.response().endWithErrorPlain("Invalid Json")
+        }
+    } catch (de: DecodeException) {
+        rc.response().endWithErrorPlain("Invalid Json")
+    }
 }
 
 private fun getNewBlogItemFromSubmittedForm(rc: RoutingContext, id: Long): BlogItem {
