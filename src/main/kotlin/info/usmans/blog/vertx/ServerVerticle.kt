@@ -196,8 +196,8 @@ class ServerVerticle : AbstractVerticle() {
                 keyValue = Buffer.buffer(blogKeyValue)
             }
             port = SYS_DEPLOY_SSL_PORT
-            //TODO: How to switch to JDK SSL Engine if not supported?
-            sslEngineOptions = OpenSSLEngineOptions()
+            if(ENV_BLOG_ENABLE_OPENSSL)
+                sslEngineOptions = OpenSSLEngineOptions()
         }
     }
 }

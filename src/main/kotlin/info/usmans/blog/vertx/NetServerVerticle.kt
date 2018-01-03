@@ -28,7 +28,8 @@ class NetServerVerticle(val sslCertValue: String?, val sslKeyValue: String?) : A
                 keyValue = Buffer.buffer(sslKeyValue)
             }
             port = 8888
-            sslEngineOptions = OpenSSLEngineOptions()
+            if(ENV_BLOG_ENABLE_OPENSSL)
+                sslEngineOptions = OpenSSLEngineOptions()
         }
 
         val server = vertx.createNetServer(netServerOptions)
