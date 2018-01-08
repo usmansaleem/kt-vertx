@@ -179,6 +179,9 @@ class ServerVerticle : AbstractVerticle() {
             logger.info("Deploying Http Server (SSL) on port $SYS_DEPLOY_SSL_PORT")
             //deploy this verticle with SSL
             vertx.createHttpServer(getSSLOptions(sslKeyValue, sslCertValue)).apply {
+                exceptionHandler { t ->
+                    logger.error("Unexpected error in Http(s) Server Verticle: ${t.message}", t)
+                }
                 requestHandler(router::accept)
                 listen(httpServerFuture.completer())
             }

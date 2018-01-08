@@ -34,6 +34,10 @@ class NetServerVerticle(val sslCertValue: String?, val sslKeyValue: String?) : A
 
         val server = vertx.createNetServer(netServerOptions)
 
+        server.exceptionHandler { t ->
+            logger.error("Unexpected exception in NetServer: ${t.message}", t)
+        }
+
         server.connectHandler({ socket ->
             val clientsMap = vertx.sharedData().getLocalMap<String, String>("clientsMap")
 
