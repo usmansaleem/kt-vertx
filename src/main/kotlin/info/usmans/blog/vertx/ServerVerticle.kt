@@ -64,11 +64,14 @@ class ServerVerticle : AbstractVerticle() {
         }, { res ->
             if (res.succeeded()) {
                 val checkoutDir = res.result()
+                logger.info("Loading Json...")
                 val loadedBlogItemList = blogItemListFromJson(File(checkoutDir, "data.json").readText())
                 if (loadedBlogItemList == null) {
                     startFuture?.fail("Unable to load data json")
                 } else {
+                    logger.info("Init blog items maps ...")
                     blogItemUtil.initBlogItemMaps(loadedBlogItemList)
+                    logger.info("Creating VertX Routers ...")
                     val router = createRouter(checkoutDir)
 
                     //create futures for async cordination
@@ -77,6 +80,7 @@ class ServerVerticle : AbstractVerticle() {
                     val netServerVerticleFuture: Future<String> = Future.future()
 
                     //create http server
+                    logger.info("Creating Http(s) Server ...")
                     createSecuredHttpServers(router, httpsServerFuture)
 
                     //optionally deploy http verticle
@@ -87,6 +91,7 @@ class ServerVerticle : AbstractVerticle() {
                     }
 
                     //deploy the net server verticle
+                    logger.info("Deploying NetServer verticle ...")
                     vertx.deployVerticle(NetServerVerticle(sslCertValue, sslKeyValue), netServerVerticleFuture.completer())
 
                     //wait for all of our services and verticles to start up before declaring this verticle as a success ...
