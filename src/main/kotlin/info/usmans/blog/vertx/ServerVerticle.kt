@@ -9,7 +9,6 @@ import io.vertx.core.Future
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.HttpServer
 import io.vertx.core.http.HttpServerOptions
-import io.vertx.core.json.DecodeException
 import io.vertx.core.json.Json
 import io.vertx.core.net.OpenSSLEngineOptions
 import io.vertx.core.net.PemKeyCertOptions
@@ -36,9 +35,9 @@ class ServerVerticle : AbstractVerticle() {
 
     private val blogItemUtil: BlogItemUtil
     private val templateEngine: HandlebarsTemplateEngine
-    private val checkoutDir: File
 
     init {
+        logger.info("***** Init ServerVerticle ****")
         Json.mapper.apply {
             registerKotlinModule()
         }
@@ -49,52 +48,65 @@ class ServerVerticle : AbstractVerticle() {
 
         blogItemUtil = BlogItemUtil()
         templateEngine = HandlebarsTemplateEngine.create()
-        checkoutDir = checkoutGist()
-        logger.info("Git directory checked out {}", checkoutDir.path)
     }
 
 
     override fun start(startFuture: Future<Void>?) {
-
-
-        val loadedBlogItemList = blogItemListFromJson(File(checkoutDir, "data.json").readText())
-        if (loadedBlogItemList == null) {
-            startFuture?.fail("Unable to load data json")
-        } else {
-            blogItemUtil.initBlogItemMaps(loadedBlogItemList)
-            val router = createRouter()
-
-            //create futures for async cordination
-            val httpsServerFuture: Future<HttpServer> = Future.future()
-            val httpServerVerticleFuture: Future<String> = Future.future()
-            val netServerVerticleFuture: Future<String> = Future.future()
-
-            //create http server
-            createSecuredHttpServers(router, httpsServerFuture)
-
-            //optionally deploy http verticle
-            if (ENV_BLOG_DEPLOY_HTTP != null) {
-                vertx.deployVerticle(HttpServerVerticleWithForwardToSecure(), httpServerVerticleFuture.completer())
-            } else {
-                httpServerVerticleFuture.complete()
-            }
-
-            //deploy the net server verticle
-            vertx.deployVerticle(NetServerVerticle(sslCertValue, sslKeyValue), netServerVerticleFuture.completer())
-
-            //wait for all of our services and verticles to start up before declaring this verticle as a success ...
-            CompositeFuture.join(httpsServerFuture, httpServerVerticleFuture, netServerVerticleFuture).setHandler({ event ->
-                if (event.succeeded()) {
-                    logger.info("All services and verticles have been deployed")
-                    startFuture?.complete()
-                } else {
-                    startFuture?.fail(event.cause())
-                }
-            })
+        vertx.exceptionHandler { t ->
+            logger.error("Unexpected Error handled by VertX: ${t.message}", t)
         }
+
+        //checkout git dir which can take some time ...
+        vertx.executeBlocking<File>({ future ->
+            val checkoutDir = checkoutGist()
+            logger.info("Git directory checked out {}", checkoutDir.path)
+            future.complete(checkoutDir)
+        }, { res ->
+            if (res.succeeded()) {
+                val checkoutDir = res.result()
+                val loadedBlogItemList = blogItemListFromJson(File(checkoutDir, "data.json").readText())
+                if (loadedBlogItemList == null) {
+                    startFuture?.fail("Unable to load data json")
+                } else {
+                    blogItemUtil.initBlogItemMaps(loadedBlogItemList)
+                    val router = createRouter(checkoutDir)
+
+                    //create futures for async cordination
+                    val httpsServerFuture: Future<HttpServer> = Future.future()
+                    val httpServerVerticleFuture: Future<String> = Future.future()
+                    val netServerVerticleFuture: Future<String> = Future.future()
+
+                    //create http server
+                    createSecuredHttpServers(router, httpsServerFuture)
+
+                    //optionally deploy http verticle
+                    if (ENV_BLOG_DEPLOY_HTTP != null) {
+                        vertx.deployVerticle(HttpServerVerticleWithForwardToSecure(), httpServerVerticleFuture.completer())
+                    } else {
+                        httpServerVerticleFuture.complete()
+                    }
+
+                    //deploy the net server verticle
+                    vertx.deployVerticle(NetServerVerticle(sslCertValue, sslKeyValue), netServerVerticleFuture.completer())
+
+                    //wait for all of our services and verticles to start up before declaring this verticle as a success ...
+                    CompositeFuture.join(httpsServerFuture, httpServerVerticleFuture, netServerVerticleFuture).setHandler({ event ->
+                        if (event.succeeded()) {
+                            logger.info("All services and verticles have been deployed")
+                            startFuture?.complete()
+                        } else {
+                            startFuture?.fail(event.cause())
+                        }
+                    })
+                }
+
+            } else {
+                startFuture?.fail(res.cause())
+            }
+        })
     }
 
-    private fun createRouter() = Router.router(vertx).apply {
+    private fun createRouter(checkoutDir: File) = Router.router(vertx).apply {
         route().handler(BodyHandler.create()) //BodyHandler aggregate entire incoming request in memory
         route().handler(FaviconHandler.create()) //serve favicon.ico from classpath
 
@@ -113,7 +125,7 @@ class ServerVerticle : AbstractVerticle() {
         //Individual Blog Entry from template engine ...
         get("/usmansaleem/blog/:url").handler(blogByFriendlyUrlGet(blogItemUtil, templateEngine))
 
-        secureRoutes()
+        secureRoutes(checkoutDir)
 
         //home automation
         post("/ifttt/webhook").handler(iftttWebHookPostHandler(vertx))
@@ -122,7 +134,7 @@ class ServerVerticle : AbstractVerticle() {
         route("/*").handler(StaticHandler.create()) //serve static contents from webroot folder on classpath
     }
 
-    private fun Router.secureRoutes() {
+    private fun Router.secureRoutes(checkoutDir: File) {
         val oauthClientId = ENV_OAUTH_CLIENT_ID
         val oauthClientSecret = ENV_OAUTH_CLIENT_SECRET
         if (oauthClientId.isNullOrBlank() || oauthClientSecret.isNullOrBlank()) {
@@ -201,7 +213,7 @@ class ServerVerticle : AbstractVerticle() {
             addEnabledSecureTransportProtocol("TLSv1.1")
             addEnabledSecureTransportProtocol("TLSv1.2")
             port = SYS_DEPLOY_SSL_PORT
-            if(ENV_BLOG_ENABLE_OPENSSL)
+            if (ENV_BLOG_ENABLE_OPENSSL)
                 sslEngineOptions = OpenSSLEngineOptions()
         }
     }
