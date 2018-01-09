@@ -198,6 +198,8 @@ class ServerVerticle : AbstractVerticle() {
                 certValue = Buffer.buffer(blogCertValue)
                 keyValue = Buffer.buffer(blogKeyValue)
             }
+            addEnabledSecureTransportProtocol("TLSv1.1")
+            addEnabledSecureTransportProtocol("TLSv1.2")
             port = SYS_DEPLOY_SSL_PORT
             if(ENV_BLOG_ENABLE_OPENSSL)
                 sslEngineOptions = OpenSSLEngineOptions()

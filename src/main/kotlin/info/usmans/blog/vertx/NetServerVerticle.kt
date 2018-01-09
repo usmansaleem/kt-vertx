@@ -28,6 +28,8 @@ class NetServerVerticle(val sslCertValue: String?, val sslKeyValue: String?) : A
                 keyValue = Buffer.buffer(sslKeyValue)
             }
             port = 8888
+            addEnabledSecureTransportProtocol("TLSv1.1")
+            addEnabledSecureTransportProtocol("TLSv1.2")
             if(ENV_BLOG_ENABLE_OPENSSL)
                 sslEngineOptions = OpenSSLEngineOptions()
         }
