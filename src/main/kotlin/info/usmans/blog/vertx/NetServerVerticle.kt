@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory
 /**
  * A secure TCP server serving on port 8888.
  */
-class NetServerVerticle(val sslCertValue: String?, val sslKeyValue: String?) : AbstractVerticle() {
+class NetServerVerticle(private val sslCertValue: String?, private val sslKeyValue: String?) : AbstractVerticle() {
     private val logger = LoggerFactory.getLogger("info.usmans.blog.vertx.NetServerVerticle")
 
     override fun start(startFuture: Future<Void>?) {
@@ -27,7 +27,7 @@ class NetServerVerticle(val sslCertValue: String?, val sslKeyValue: String?) : A
                 certValue = Buffer.buffer(sslCertValue)
                 keyValue = Buffer.buffer(sslKeyValue)
             }
-            port = 8888
+            port = SYS_NET_SERVER_DEPLOY_PORT
             addEnabledSecureTransportProtocol("TLSv1.1")
             addEnabledSecureTransportProtocol("TLSv1.2")
             if(ENV_BLOG_ENABLE_OPENSSL)

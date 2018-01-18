@@ -26,6 +26,7 @@ internal val SYS_BLOG_FALLBACK_REDIRECT_HOST = System.getProperty("fallbackRedir
 internal val SYS_REDIRECT_SSL_PORT = System.getProperty("redirectSSLPort", "443").toIntOrNull() ?: 443
 internal val SYS_DEPLOY_SSL_PORT = System.getProperty("deploySSLPort", "443").toIntOrNull() ?: 443
 internal val SYS_DEPLOY_PORT = System.getProperty("deployPort", "80").toIntOrNull() ?: 80
+internal val SYS_NET_SERVER_DEPLOY_PORT = System.getProperty("netServerDeployPort", "8888").toIntOrNull() ?: 8888
 
 /**
  * Read PEM encoded SSL Certificate from path defined by BLOG_CERT_PATH environment variable. If BLOG_CERT_PATH is not
