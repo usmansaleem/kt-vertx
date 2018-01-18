@@ -21,6 +21,8 @@ import io.vertx.ext.web.sstore.LocalSessionStore
 import io.vertx.ext.web.templ.HandlebarsTemplateEngine
 import org.slf4j.LoggerFactory
 import java.io.File
+import java.io.StringReader
+import java.util.*
 
 /**
  * Server Verticle - Launching Https server on 443 (and optionally unsecure server on 80).
@@ -35,6 +37,8 @@ class ServerVerticle : AbstractVerticle() {
 
     private val blogItemUtil: BlogItemUtil
     private val templateEngine: HandlebarsTemplateEngine
+
+    private val gitProperties: Properties = Properties()
 
     init {
         logger.info("***** Init ServerVerticle ****")
@@ -60,6 +64,11 @@ class ServerVerticle : AbstractVerticle() {
         vertx.executeBlocking<File>({ future ->
             val checkoutDir = checkoutGist()
             logger.info("Git directory checked out {}", checkoutDir.path)
+
+            val gitProp = vertx.fileSystem().readFileBlocking("git.properties")
+            gitProperties.load(StringReader(gitProp.toString()))
+            logger.info("Git Properties loaded.")
+
             future.complete(checkoutDir)
         }, { res ->
             if (res.succeeded()) {
@@ -71,6 +80,8 @@ class ServerVerticle : AbstractVerticle() {
                 } else {
                     logger.info("Init blog items maps ...")
                     blogItemUtil.initBlogItemMaps(loadedBlogItemList)
+
+
                     logger.info("Creating VertX Routers ...")
                     val router = createRouter(checkoutDir)
 
@@ -134,6 +145,10 @@ class ServerVerticle : AbstractVerticle() {
 
         //home automation
         post("/ifttt/webhook").handler(iftttWebHookPostHandler(vertx))
+
+        get("/admin/info").handler {
+            it.response().sendJson(Json.encodePrettily(gitProperties))
+        }
 
         //static pages
         route("/*").handler(StaticHandler.create()) //serve static contents from webroot folder on classpath
